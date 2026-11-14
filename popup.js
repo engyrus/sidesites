@@ -6,7 +6,8 @@ import {
 const list = document.getElementById('sites');
 const urlForm = document.getElementById('url-form');
 const urlInput = document.getElementById('url');
-const fitBox = document.getElementById('fit');
+const adhocUaBtn = document.getElementById('adhoc-ua');
+const adhocFitBtn = document.getElementById('adhoc-fit');
 const saveBox = document.getElementById('save');
 const nameInput = document.getElementById('name');
 const urlError = document.getElementById('url-error');
@@ -157,22 +158,27 @@ const activeSite = panelOpen ? (savedSite ?? (requested?.id === currentId ? requ
 const toggleUaBtn = document.getElementById('toggle-ua');
 const toggleFitBtn = document.getElementById('toggle-fit');
 
-function renderHeaderToggles() {
-  const mobile = isMobile(activeSite);
-  toggleUaBtn.disabled = !activeSite;
-  toggleUaBtn.innerHTML = mobile ? MOBILE_SVG : DESKTOP_SVG;
-  toggleUaBtn.title = activeSite
+function renderUaButton(btn, mobile, enabled = true) {
+  btn.disabled = !enabled;
+  btn.innerHTML = mobile ? MOBILE_SVG : DESKTOP_SVG;
+  btn.title = enabled
     ? (mobile ? 'Mobile version (click for Desktop)' : 'Desktop version (click for Mobile)')
     : 'No site open in sidebar';
-  toggleUaBtn.setAttribute('aria-label', toggleUaBtn.title);
+  btn.setAttribute('aria-label', btn.title);
+}
 
-  const fit = isFit(activeSite);
-  toggleFitBtn.disabled = !activeSite;
-  toggleFitBtn.classList.toggle('active', Boolean(activeSite && fit));
-  toggleFitBtn.setAttribute('aria-pressed', String(Boolean(activeSite && fit)));
-  toggleFitBtn.title = activeSite
+function renderFitButton(btn, fit, enabled = true) {
+  btn.disabled = !enabled;
+  btn.classList.toggle('active', Boolean(enabled && fit));
+  btn.setAttribute('aria-pressed', String(Boolean(enabled && fit)));
+  btn.title = enabled
     ? (fit ? 'Fit to sidebar: On' : 'Fit to sidebar: Off')
     : 'No site open in sidebar';
+}
+
+function renderHeaderToggles() {
+  renderUaButton(toggleUaBtn, isMobile(activeSite), Boolean(activeSite));
+  renderFitButton(toggleFitBtn, isFit(activeSite), Boolean(activeSite));
 }
 
 renderHeaderToggles();
@@ -279,6 +285,21 @@ saveBox.addEventListener('change', () => {
   if (saveBox.checked) nameInput.focus();
 });
 
+let adhocUa = UA_DESKTOP;
+let adhocFit = false;
+renderUaButton(adhocUaBtn, false);
+renderFitButton(adhocFitBtn, false);
+
+adhocUaBtn.addEventListener('click', () => {
+  adhocUa = adhocUa === UA_MOBILE ? UA_DESKTOP : UA_MOBILE;
+  renderUaButton(adhocUaBtn, adhocUa === UA_MOBILE);
+});
+
+adhocFitBtn.addEventListener('click', () => {
+  adhocFit = !adhocFit;
+  renderFitButton(adhocFitBtn, adhocFit);
+});
+
 urlForm.addEventListener('submit', (event) => {
   event.preventDefault();
   const url = normalizeUrl(urlInput.value);
@@ -287,8 +308,8 @@ urlForm.addEventListener('submit', (event) => {
     urlInput.focus();
     return;
   }
-  const userAgent = urlForm.elements.ua.value;
-  const fit = fitBox.checked;
+  const userAgent = adhocUa;
+  const fit = adhocFit;
   const title = nameInput.value.trim() || hostnameOf(url);
 
   if (!saveBox.checked) {

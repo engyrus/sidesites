@@ -190,7 +190,8 @@ hr {
 }
 .url-row {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
 }
 .adhoc input[type="text"] {
   flex: 1;
@@ -211,54 +212,17 @@ hr {
   border-color: var(--error);
   outline-color: var(--error);
 }
-button.primary {
-  flex: none;
-  font: inherit;
-  font-weight: 500;
-  border: 1px solid var(--accent);
-  border-radius: 16px;
-  padding: 4px 14px;
+.icon-btn.primary-icon {
   background: var(--accent);
   color: var(--accent-fg);
-  cursor: pointer;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
 }
-.segmented {
-  flex: 1;
-  display: flex;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  overflow: hidden;
-}
-.ua-fit-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.segmented label {
-  flex: 1;
-  position: relative;
-}
-.segmented input {
-  position: absolute;
-  opacity: 0;
-  inset: 0;
-  margin: 0;
-}
-.segmented span {
-  display: block;
-  padding: 3px 0;
-  text-align: center;
-  font-size: 12px;
-  cursor: pointer;
-}
-.segmented label + label span { border-left: 1px solid var(--border); }
-.segmented input:checked + span {
-  background: var(--active);
-  font-weight: 500;
-}
-.segmented input:focus-visible + span {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+.icon-btn.primary-icon:hover, .icon-btn.primary-icon:focus-visible {
+  background: var(--accent);
+  color: var(--accent-fg);
+  opacity: 0.9;
 }
 .check {
   display: flex;

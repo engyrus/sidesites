@@ -48,18 +48,14 @@
     <form id="url-form" class="adhoc" autocomplete="off" novalidate aria-label="Open a URL in the sidebar">
       <div class="url-row">
         <input id="url" type="text" inputmode="url" placeholder="Open URL in sidebar&hellip;" spellcheck="false" aria-label="URL">
-        <button id="go" type="submit" class="primary">Go</button>
-      </div>
-
-      <div class="ua-fit-row">
-        <div class="segmented" role="radiogroup" aria-label="Version">
-          <label><input type="radio" name="ua" value="desktop" checked><span>Desktop</span></label>
-          <label><input type="radio" name="ua" value="mobile"><span>Mobile</span></label>
-        </div>
-        <label class="check" title="Zoom down to fit the sidebar if the page is wider than the sidebar">
-          <input id="fit" type="checkbox">
-          <span>Fit</span>
-        </label>
+        <button id="adhoc-ua" class="icon-btn" type="button" title="Desktop version (click for Mobile)" aria-label="Toggle Desktop/Mobile"></button>
+        <button id="adhoc-fit" class="icon-btn" type="button" title="Fit to sidebar: Off" aria-label="Toggle Fit" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+            <path d="M5 8h6M6.5 6.5 5 8l1.5 1.5M9.5 6.5 11 8l-1.5 1.5"/>
+          </svg>
+        </button>
+        <button id="go" type="submit" class="icon-btn primary-icon" title="Open in sidebar" aria-label="Go">&#x2192;</button>
       </div>
 
       <label class="check">

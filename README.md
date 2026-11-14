@@ -19,6 +19,7 @@ browser's native side panel, including sites that normally refuse to be shown in
 - **Sidebar toolbar in the menu**: The top bar of the SideSites menu includes quick controls for the active side panel site:
   - **Desktop / Mobile** toggle (switches the current site between Desktop and Mobile mode and reloads it).
   - **Fit** toggle (toggles zoom-to-fit on the current site immediately without reloading).
+  - **Split** toggle (splits the sidebar into Top and Bottom panes, or exits split view).
   - **Back**, **Forward**, and **Reload** buttons to navigate the sidebar's history or reload the current page in place (without resetting to the site's starting URL).
 - **One-click popular sites**: The settings page includes categorized buttons (Chat, Music, AI assistants, Productivity,
   Reference, Social, Shopping) to add popular sites with sensible defaults.
@@ -27,12 +28,25 @@ browser's native side panel, including sites that normally refuse to be shown in
 - **Open any URL**: Below **Manage sites…**, a **More** disclosure triangle (which remembers whether you left it open) reveals:
   - **Open side site in a new tab**: opens the page the sidebar is currently showing in a regular tab.
   - **Open current tab as side site**: shows the current tab's page in the sidebar.
-  - A URL field (which fills in the current tab's address when you click into it), a Desktop/Mobile selector, a **Fit**
-    checkbox, and an **Add to extension menu** checkbox that reveals a name field. Press **Go** (or **`Enter`**) to open the
-    URL in the sidebar.
-- **Per-window**: Each browser window's side panel can show a different site.
+  - A URL field (which fills in the current tab's address when you click into it) with inline **Desktop/Mobile** and **Fit**
+    icon toggles, an **Add to extension menu** checkbox that reveals a name field, and a **`→`** submit button (or press **`Enter`**).
+- **Per-window**: Each browser window's side panel can show a different site (or split pair).
 - **Remembers your last site**: When a side panel opens without you choosing a site (e.g. from the browser's own side
   panel menu), it shows the site you used last.
+
+## Split pane
+
+SideSites can display two sites at once in a top/bottom split inside the side panel:
+
+- **Starting a split:**
+  - Click the **Split** button in the menu header to keep the current site on **Top** and open a site picker in the **Bottom** pane (or **right-click** the **Split** button to put the current site on **Bottom** and the picker on **Top**).
+  - Or **right-click** any saved site, **Open current tab as side site**, or the **`→`** submit button and choose **Open in Top** or **Open in Bottom**.
+- **Filling the second pane:** Pick any saved site directly from the in-pane picker, enter an ad-hoc URL in the picker's URL bar (with its own Desktop/Mobile and Fit toggles), or choose a site from the extension menu.
+- **Pane focus:** Interacting with a pane (clicking, typing, or scrolling) or loading a site into it focuses that pane, indicated by a small triangle in its top-right corner. Left-clicking a site in the menu, pressing **`1`**–**`9`**, using the header controls (**Desktop/Mobile**, **Fit**, **Back/Forward/Reload**), and **Open side site in a new tab** all apply to the focused pane.
+- **Resizing, swapping, and exiting:**
+  - Drag the divider between panes to resize (persisted across sessions), or **double-click** the divider to snap back to 50/50.
+  - **Right-click** the **Split** button while already in split mode to swap the Top and Bottom panes.
+  - **Left-click** the **Split** button (or right-click an item and choose **Open Full**) to exit split mode and keep the focused pane full-height.
 
 ## How it works
 

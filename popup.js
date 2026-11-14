@@ -42,7 +42,18 @@ const sites = await getSites();
 const { [windowKey(windowId)]: requested } = await chrome.storage.session.get(windowKey(windowId));
 const { [LAST_SITE_KEY]: lastId } = await chrome.storage.local.get(LAST_SITE_KEY);
 const panelOpen = await isSidePanelOpen();
-const currentId = panelOpen ? (requested?.id ?? lastId) : null;
+const splitActive = panelOpen && requested?.mode === 'split';
+const focusedPane = splitActive && requested.focused === 'bottom' ? 'bottom' : 'top';
+const topId = splitActive ? requested.top?.id : null;
+const bottomId = splitActive ? requested.bottom?.id : null;
+const currentId = panelOpen
+  ? (splitActive ? requested[focusedPane]?.id : (requested?.id ?? lastId))
+  : null;
+const savedSite = currentId ? sites.find((s) => s.id === currentId) : null;
+const activeRequested = splitActive ? requested[focusedPane] : requested;
+const activeSite = panelOpen
+  ? (savedSite ?? (activeRequested?.id === currentId ? activeRequested : null))
+  : null;
 const { [currentPageKey(windowId)]: currentPage } = await chrome.storage.session.get(currentPageKey(windowId));
 const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => []);
 const currentTabUrl = activeTab?.url && /^https?:/i.test(activeTab.url) ? activeTab.url : '';
@@ -58,28 +69,74 @@ async function isSidePanelOpen() {
     .catch(() => false);
 }
 
-function chooseSite(site, { saveList = null } = {}) {
-  // Tell this window's side panel (open or about to open) which site to show. The timestamp makes
-  // re-choosing the current site reload it from its starting URL. userAgent is included so that
-  // sites that aren't in the saved list (from "Open URL in sidebar") get the right user agent.
-  const writes = [
-    chrome.storage.session.set({
-      [windowKey(windowId)]: {
-        id: site.id,
-        title: site.title,
-        url: site.url,
-        userAgent: site.userAgent ?? UA_DESKTOP,
-        fit: Boolean(site.fit),
-        ts: Date.now(),
-      },
-    }),
-  ];
+function toPayload(site) {
+  return {
+    id: site.id,
+    title: site.title,
+    url: site.url,
+    userAgent: site.userAgent ?? UA_DESKTOP,
+    fit: Boolean(site.fit),
+  };
+}
+
+function chooseSite(site, { target = null, saveList = null } = {}) {
+  // Tell this window's side panel (open or about to open) which site to show. Left-clicking in
+  // split mode targets the focused pane; right-clicking lets you pick Full, Top, or Bottom.
+  const effectiveTarget = target ?? (splitActive ? focusedPane : 'full');
+  let payload;
+  if (effectiveTarget === 'top' || effectiveTarget === 'bottom') {
+    const otherPane = effectiveTarget === 'top' ? 'bottom' : 'top';
+    const otherSite = splitActive ? requested[otherPane] : null;
+    payload = {
+      mode: 'split',
+      focused: effectiveTarget,
+      top: effectiveTarget === 'top' ? toPayload(site) : (otherSite ? toPayload(otherSite) : null),
+      bottom: effectiveTarget === 'bottom' ? toPayload(site) : (otherSite ? toPayload(otherSite) : null),
+      reloadPane: effectiveTarget,
+      ts: Date.now(),
+    };
+  } else {
+    payload = { ...toPayload(site), ts: Date.now() };
+  }
+
+  const writes = [chrome.storage.session.set({ [windowKey(windowId)]: payload })];
   if (saveList) writes.push(saveSites(saveList));
 
   // No awaiting before this call, or the click's user gesture is lost.
   const opened = chrome.sidePanel.open({ windowId }).catch(console.error);
   Promise.allSettled([opened, ...writes]).finally(() => window.close());
 }
+
+const contextMenu = document.getElementById('context-menu');
+let contextAction = null;
+
+function hideContextMenu() {
+  contextMenu.hidden = true;
+  contextAction = null;
+}
+
+function showContextMenu(onSelect, x, y) {
+  contextAction = onSelect;
+  contextMenu.hidden = false;
+  const maxX = Math.max(0, window.innerWidth - contextMenu.offsetWidth - 4);
+  const maxY = Math.max(0, window.innerHeight - contextMenu.offsetHeight - 4);
+  contextMenu.style.left = `${Math.min(x, maxX)}px`;
+  contextMenu.style.top = `${Math.min(y, maxY)}px`;
+  contextMenu.querySelector('button')?.focus();
+}
+
+contextMenu.addEventListener('click', (event) => {
+  const btn = event.target.closest('button[data-target]');
+  if (!btn || !contextAction) return;
+  const action = contextAction;
+  const target = btn.dataset.target;
+  hideContextMenu();
+  action(target);
+});
+
+document.addEventListener('click', (event) => {
+  if (!contextMenu.hidden && !contextMenu.contains(event.target)) hideContextMenu();
+});
 
 function render() {
   list.replaceChildren();
@@ -93,7 +150,7 @@ function render() {
     button.type = 'button';
     button.className = 'item';
     button.role = 'menuitem';
-    button.title = site.url;
+    button.title = `${site.url}\nRight-click to target a pane`;
     if (site.id === currentId) button.classList.add('current');
 
     const icon = document.createElement('img');
@@ -106,6 +163,13 @@ function render() {
     title.textContent = site.title || hostnameOf(site.url);
 
     button.append(icon, title);
+    if (splitActive && (site.id === topId || site.id === bottomId)) {
+      const badge = document.createElement('span');
+      badge.className = 'pane-badge';
+      const inBoth = site.id === topId && site.id === bottomId;
+      badge.textContent = inBoth ? 'Top/Bot' : site.id === topId ? 'Top' : 'Bottom';
+      button.append(badge);
+    }
     if (index < 9) {
       const key = document.createElement('span');
       key.className = 'key';
@@ -114,14 +178,23 @@ function render() {
     }
 
     button.addEventListener('click', () => chooseSite(site));
+    button.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      showContextMenu((target) => chooseSite(site, { target }), event.clientX, event.clientY);
+    });
     li.append(button);
     list.append(li);
   });
 }
 
 // Number keys 1-9 pick a site; arrow keys move between menu items. (Not while focus is in the URL
-// form, where these keys are for typing and for the Desktop/Mobile selector.)
+// form, where these keys are for typing.) Escape closes the context menu if open.
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !contextMenu.hidden) {
+    hideContextMenu();
+    event.preventDefault();
+    return;
+  }
   if (urlForm.contains(document.activeElement)) return;
   if (event.altKey || event.ctrlKey || event.metaKey) return;
   if (/^[1-9]$/.test(event.key)) {
@@ -143,20 +216,20 @@ document.getElementById('manage').addEventListener('click', () => {
   window.close();
 });
 
-// "Open side site in a new tab": the page the sidebar is showing now (as reported by
-// frame-reporter.js), falling back to the starting URL of the site it was told to show.
-const sidebarUrl = panelOpen ? (currentPage?.url ?? requested?.url ?? sites.find((s) => s.id === lastId)?.url) : null;
+// "Open side site in a new tab": the page the focused pane is showing now (as reported by
+// frame-reporter.js), falling back to the starting URL of that pane's site.
+const sidebarUrl = panelOpen
+  ? (currentPage?.url ?? activeSite?.url ?? sites.find((s) => s.id === lastId)?.url)
+  : null;
 
 const DESKTOP_SVG =
   '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="8" rx="1.5"/><path d="M5.5 13.5h5M8 11v2.5"/></svg>';
 const MOBILE_SVG =
   '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="2" width="7" height="12" rx="1.5"/><path d="M7.5 11.5h1"/></svg>';
 
-const savedSite = currentId ? sites.find((s) => s.id === currentId) : null;
-const activeSite = panelOpen ? (savedSite ?? (requested?.id === currentId ? requested : null)) : null;
-
 const toggleUaBtn = document.getElementById('toggle-ua');
 const toggleFitBtn = document.getElementById('toggle-fit');
+const toggleSplitBtn = document.getElementById('toggle-split');
 
 function renderUaButton(btn, mobile, enabled = true) {
   btn.disabled = !enabled;
@@ -179,9 +252,64 @@ function renderFitButton(btn, fit, enabled = true) {
 function renderHeaderToggles() {
   renderUaButton(toggleUaBtn, isMobile(activeSite), Boolean(activeSite));
   renderFitButton(toggleFitBtn, isFit(activeSite), Boolean(activeSite));
+  const canSplit = Boolean(panelOpen && (splitActive || activeSite));
+  toggleSplitBtn.disabled = !canSplit;
+  toggleSplitBtn.classList.toggle('active', Boolean(splitActive));
+  toggleSplitBtn.setAttribute('aria-pressed', String(Boolean(splitActive)));
+  toggleSplitBtn.title = !canSplit
+    ? 'No site open in sidebar'
+    : splitActive
+      ? 'Exit split view (right-click to swap panes)'
+      : 'Split sidebar (right-click to put current site on bottom)';
 }
 
 renderHeaderToggles();
+
+async function setSplitState(payload) {
+  await chrome.storage.session.set({ [windowKey(windowId)]: payload });
+  window.close();
+}
+
+toggleSplitBtn.addEventListener('click', () => {
+  if (splitActive) {
+    const keepSite = activeSite ?? requested.top ?? requested.bottom;
+    if (!keepSite) return;
+    setSplitState({ ...toPayload(keepSite), ts: Date.now() });
+    return;
+  }
+  if (!activeSite) return;
+  setSplitState({
+    mode: 'split',
+    focused: 'bottom',
+    top: toPayload(activeSite),
+    bottom: null,
+    ts: Date.now(),
+  });
+});
+
+toggleSplitBtn.addEventListener('contextmenu', (event) => {
+  event.preventDefault();
+  if (splitActive) {
+    setSplitState({
+      mode: 'split',
+      focused: focusedPane === 'top' ? 'bottom' : 'top',
+      top: requested.bottom ?? null,
+      bottom: requested.top ?? null,
+      reloadPane: 'both',
+      ts: Date.now(),
+    });
+    return;
+  }
+  if (!activeSite) return;
+  setSplitState({
+    mode: 'split',
+    focused: 'top',
+    top: null,
+    bottom: toPayload(activeSite),
+    reloadPane: 'bottom',
+    ts: Date.now(),
+  });
+});
 
 toggleUaBtn.addEventListener('click', async () => {
   if (!activeSite) return;
@@ -190,6 +318,15 @@ toggleUaBtn.addEventListener('click', async () => {
   renderHeaderToggles();
   if (savedSite) {
     await saveSites(sites);
+  } else if (splitActive) {
+    await chrome.storage.session.set({
+      [windowKey(windowId)]: {
+        ...requested,
+        [focusedPane]: { ...activeSite, userAgent: nextUa },
+        reloadPane: focusedPane,
+        ts: Date.now(),
+      },
+    });
   } else {
     await chrome.storage.session.set({
       [windowKey(windowId)]: { ...activeSite, userAgent: nextUa, ts: Date.now() },
@@ -204,6 +341,14 @@ toggleFitBtn.addEventListener('click', async () => {
   renderHeaderToggles();
   if (savedSite) {
     await saveSites(sites);
+  } else if (splitActive) {
+    await chrome.storage.session.set({
+      [windowKey(windowId)]: {
+        ...requested,
+        [focusedPane]: { ...activeSite, fit: nextFit },
+      },
+    });
+    chrome.runtime.sendMessage({ type: 'sidebar-set-fit', windowId, fit: nextFit }).catch(() => {});
   } else {
     await chrome.storage.session.set({
       [windowKey(windowId)]: { ...activeSite, fit: nextFit },
@@ -237,15 +382,27 @@ sidebarToTab.addEventListener('click', () => {
 // saved sites, use that (with its saved desktop/mobile setting); otherwise open it as a one-off.
 const tabToSidebar = document.getElementById('tab-to-sidebar');
 tabToSidebar.disabled = !currentTabUrl;
-tabToSidebar.title = currentTabUrl || 'This tab can\u2019t be shown in the sidebar';
-tabToSidebar.addEventListener('click', () => {
+tabToSidebar.title = currentTabUrl
+  ? `${currentTabUrl}\nRight-click to target a pane`
+  : 'This tab can\u2019t be shown in the sidebar';
+function openCurrentTab(target = null) {
   const saved = sites.find((s) => s.url === currentTabUrl);
-  chooseSite(saved ?? {
-    id: `adhoc:${newId()}`,
-    title: activeTab.title || hostnameOf(currentTabUrl),
-    url: currentTabUrl,
-    userAgent: UA_DESKTOP,
-  });
+  chooseSite(
+    saved ?? {
+      id: `adhoc:${newId()}`,
+      title: activeTab.title || hostnameOf(currentTabUrl),
+      url: currentTabUrl,
+      userAgent: UA_DESKTOP,
+    },
+    { target }
+  );
+}
+
+tabToSidebar.addEventListener('click', () => openCurrentTab());
+tabToSidebar.addEventListener('contextmenu', (event) => {
+  if (!currentTabUrl) return;
+  event.preventDefault();
+  showContextMenu((target) => openCurrentTab(target), event.clientX, event.clientY);
 });
 
 render();
@@ -300,8 +457,7 @@ adhocFitBtn.addEventListener('click', () => {
   renderFitButton(adhocFitBtn, adhocFit);
 });
 
-urlForm.addEventListener('submit', (event) => {
-  event.preventDefault();
+function submitAdhocUrl(target = null) {
   const url = normalizeUrl(urlInput.value);
   if (!url) {
     showUrlError('Please enter a valid web address.');
@@ -314,7 +470,7 @@ urlForm.addEventListener('submit', (event) => {
 
   if (!saveBox.checked) {
     // A one-off visit: not added to the saved list.
-    chooseSite({ id: `adhoc:${newId()}`, title, url, userAgent, fit });
+    chooseSite({ id: `adhoc:${newId()}`, title, url, userAgent, fit }, { target });
     return;
   }
 
@@ -324,11 +480,23 @@ urlForm.addEventListener('submit', (event) => {
     existing.title = nameInput.value.trim() || existing.title;
     existing.userAgent = userAgent;
     existing.fit = fit;
-    chooseSite(existing, { saveList: sites });
+    chooseSite(existing, { target, saveList: sites });
     return;
   }
   const site = { id: newId(), title, url, userAgent, fit };
-  chooseSite(site, { saveList: [...sites, site] });
+  chooseSite(site, { target, saveList: [...sites, site] });
+}
+
+urlForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submitAdhocUrl();
+});
+
+const goBtn = document.getElementById('go');
+goBtn.title = 'Open in sidebar\nRight-click to target a pane';
+goBtn.addEventListener('contextmenu', (event) => {
+  event.preventDefault();
+  showContextMenu((target) => submitAdhocUrl(target), event.clientX, event.clientY);
 });
 
 // Start with focus on the current (or first) saved site. With no saved sites, reveal the URL form

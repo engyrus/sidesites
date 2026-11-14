@@ -90,9 +90,10 @@ function uniqueRuleDomains(sites) {
 async function getAdHocSites() {
   const [saved, session] = await Promise.all([getSites(), chrome.storage.session.get(null)]);
   const savedIds = new Set(saved.map((s) => s.id));
-  return Object.entries(session)
-    .filter(([key, value]) => key.startsWith('win:') && value?.url && !savedIds.has(value.id))
-    .map(([, value]) => value);
+  const candidates = Object.entries(session)
+    .filter(([key]) => key.startsWith('win:'))
+    .flatMap(([, value]) => (value?.mode === 'split' ? [value.top, value.bottom] : [value]));
+  return candidates.filter((site) => site?.url && !savedIds.has(site.id));
 }
 
 // Rule updates can be triggered from several places at once; run them one at a time.

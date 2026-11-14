@@ -13,16 +13,198 @@
     }
     body {
       display: flex;
+      flex-direction: column;
       font: 14px/1.5 system-ui, sans-serif;
       color: #1f1f1f;
       background: #fff;
     }
-    iframe {
+    .pane {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    body.split-active #pane-top {
       flex: none;
+      height: calc(var(--split, 50%) - 2px);
+      min-height: 80px;
+    }
+    body.split-active #pane-bottom {
+      flex: 1;
+      min-height: 80px;
+    }
+    #splitter {
+      flex: none;
+      height: 4px;
+      background: #e3e3e3;
+      cursor: row-resize;
+      position: relative;
+      z-index: 5;
+      transition: background 0.12s ease;
+    }
+    #splitter::before {
+      content: "";
+      position: absolute;
+      inset: -3px 0;
+    }
+    #splitter:hover,
+    body.dragging #splitter {
+      background: #0b57d0;
+    }
+    body.dragging iframe {
+      pointer-events: none;
+    }
+    body.split-active .pane.focused::before,
+    body.split-active .pane.focused::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      pointer-events: none;
+    }
+    body.split-active .pane.focused::before {
+      border-width: 0 17px 17px 0;
+      border-color: transparent rgba(0, 0, 0, 0.55) transparent transparent;
+      z-index: 10;
+    }
+    body.split-active .pane.focused::after {
+      border-width: 0 15px 15px 0;
+      border-color: transparent #0b57d0 transparent transparent;
+      z-index: 11;
+    }
+    iframe {
+      display: block;
       width: 100%;
       height: 100%;
       border: none;
       transform-origin: 0 0;
+    }
+    .pane-picker {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 12px 10px;
+      overflow-y: auto;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .pane-picker-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #5e5e5e;
+      padding: 0 8px 8px;
+    }
+    .pane-picker-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .pane-picker-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 7px 10px;
+      border: none;
+      border-radius: 6px;
+      background: none;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .pane-picker-btn:hover,
+    .pane-picker-btn:focus-visible {
+      background: #f0f4f9;
+      outline: none;
+    }
+    .pane-picker-btn img {
+      flex: none;
+      width: 16px;
+      height: 16px;
+    }
+    .pane-picker-btn span {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .pane-picker-form {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #e3e3e3;
+    }
+    .pane-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .pane-picker-input {
+      flex: 1;
+      min-width: 0;
+      font: inherit;
+      font-size: 13px;
+      color: inherit;
+      background: transparent;
+      border: 1px solid #c4c7c5;
+      border-radius: 6px;
+      padding: 5px 8px;
+    }
+    .pane-picker-input:focus {
+      outline: 2px solid #0b57d0;
+      outline-offset: -1px;
+      border-color: transparent;
+    }
+    .pane-picker-input.invalid {
+      border-color: #b3261e;
+      outline-color: #b3261e;
+    }
+    .pane-picker-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border: none;
+      border-radius: 6px;
+      background: none;
+      color: #5e5e5e;
+      font: 14px/1 system-ui, sans-serif;
+      cursor: pointer;
+    }
+    .pane-picker-icon-btn:hover,
+    .pane-picker-icon-btn:focus-visible {
+      background: #f0f4f9;
+      color: #1f1f1f;
+      outline: none;
+    }
+    .pane-picker-icon-btn.active {
+      background: #d3e3fd;
+      color: #0b57d0;
+    }
+    .pane-picker-icon-btn.primary {
+      background: #0b57d0;
+      color: #fff;
+    }
+    .pane-picker-icon-btn.primary:hover,
+    .pane-picker-icon-btn.primary:focus-visible {
+      background: #0b57d0;
+      color: #fff;
+      opacity: 0.9;
+    }
+    .pane-picker-error {
+      margin: 0;
+      color: #b3261e;
+      font-size: 12px;
     }
     #empty {
       flex: 1;
@@ -48,6 +230,26 @@
     [hidden] { display: none !important; }
     @media (prefers-color-scheme: dark) {
       body { color: #e3e3e3; background: #1f1f1f; }
+      #splitter { background: #444746; }
+      #splitter:hover,
+      body.dragging #splitter { background: #a8c7fa; }
+      body.split-active .pane.focused::after { border-color: transparent #a8c7fa transparent transparent; }
+      .pane-picker { background: #1f1f1f; }
+      .pane-picker-title { color: #a8a8a8; }
+      .pane-picker-btn:hover,
+      .pane-picker-btn:focus-visible { background: #2d2f31; }
+      .pane-picker-form { border-top-color: #444746; }
+      .pane-picker-input { border-color: #5e5e5e; }
+      .pane-picker-input:focus { outline-color: #a8c7fa; }
+      .pane-picker-input.invalid { border-color: #f2b8b5; outline-color: #f2b8b5; }
+      .pane-picker-icon-btn { color: #a8a8a8; }
+      .pane-picker-icon-btn:hover,
+      .pane-picker-icon-btn:focus-visible { background: #2d2f31; color: #e3e3e3; }
+      .pane-picker-icon-btn.active { background: #004a77; color: #a8c7fa; }
+      .pane-picker-icon-btn.primary { background: #a8c7fa; color: #062e6f; }
+      .pane-picker-icon-btn.primary:hover,
+      .pane-picker-icon-btn.primary:focus-visible { background: #a8c7fa; color: #062e6f; }
+      .pane-picker-error { color: #f2b8b5; }
       #empty button { background: #a8c7fa; color: #062e6f; }
       #empty button:hover { background: #d3e3fd; }
     }
@@ -64,11 +266,21 @@
     site via Permissions-Policy (`allow=...`). Without this, the browser blocks cross-origin iframes
     from accessing these APIs even when the user has granted permission to the site's origin.
   -->
-  <iframe
-    id="site"
-    hidden
-    allow="clipboard-read; clipboard-write; microphone; camera; geolocation; display-capture; fullscreen; autoplay; encrypted-media; picture-in-picture; web-share; screen-wake-lock"
-  ></iframe>
+  <div id="pane-top" class="pane focused" hidden>
+    <iframe
+      id="site"
+      allow="clipboard-read; clipboard-write; microphone; camera; geolocation; display-capture; fullscreen; autoplay; encrypted-media; picture-in-picture; web-share; screen-wake-lock"
+    ></iframe>
+    <div id="picker-top" class="pane-picker" hidden></div>
+  </div>
+  <div id="splitter" hidden aria-label="Resize split panes" role="separator"></div>
+  <div id="pane-bottom" class="pane" hidden>
+    <iframe
+      id="site-bottom"
+      allow="clipboard-read; clipboard-write; microphone; camera; geolocation; display-capture; fullscreen; autoplay; encrypted-media; picture-in-picture; web-share; screen-wake-lock"
+    ></iframe>
+    <div id="picker-bottom" class="pane-picker" hidden></div>
+  </div>
   <script type="module" src="sidepanel.js"></script>
 </body>
 </html>

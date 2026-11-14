@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SideSites</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="menu-title">
+    <img src="icons/icon32.png" alt="" width="16" height="16">
+    <span class="menu-title-text">SideSites</span>
+    <div class="nav-actions">
+      <button id="toggle-ua" class="icon-btn" type="button" title="Desktop version" aria-label="Toggle Desktop/Mobile"></button>
+      <button id="toggle-fit" class="icon-btn" type="button" title="Fit to sidebar" aria-label="Toggle Fit" aria-pressed="false">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+          <path d="M5 8h6M6.5 6.5 5 8l1.5 1.5M9.5 6.5 11 8l-1.5 1.5"/>
+        </svg>
+      </button>
+      <span class="actions-sep" aria-hidden="true"></span>
+      <button id="nav-back" class="icon-btn" type="button" title="Back" aria-label="Back">&#x2190;</button>
+      <button id="nav-forward" class="icon-btn" type="button" title="Forward" aria-label="Forward">&#x2192;</button>
+      <button id="nav-reload" class="icon-btn" type="button" title="Reload current page" aria-label="Reload">&#x21BB;</button>
+    </div>
+  </header>
+  <ul id="sites" role="menu" aria-label="Sites"></ul>
+  <div id="empty" hidden>No sites yet.</div>
+  <hr>
+  <button id="manage" class="item" type="button">
+    <span class="icon" aria-hidden="true">&#x2699;</span><span class="title">Manage sites&hellip;</span>
+  </button>
+  <hr>
+
+  <details id="more">
+    <summary>
+      <span class="icon disclosure" aria-hidden="true"></span><span class="title">More</span>
+    </summary>
+
+    <button id="sidebar-to-tab" class="item" type="button">
+      <span id="sidebar-to-tab-icon" class="icon" aria-hidden="true">&#x2196;</span><span class="title">Open side site in a new tab</span>
+    </button>
+    <button id="tab-to-sidebar" class="item" type="button">
+      <span id="tab-to-sidebar-icon" class="icon" aria-hidden="true">&#x21E5;</span><span class="title">Open current tab as side site</span>
+    </button>
+
+    <hr>
+
+    <form id="url-form" class="adhoc" autocomplete="off" novalidate aria-label="Open a URL in the sidebar">
+      <div class="url-row">
+        <input id="url" type="text" inputmode="url" placeholder="Open URL in sidebar&hellip;" spellcheck="false" aria-label="URL">
+        <button id="go" type="submit" class="primary">Go</button>
+      </div>
+
+      <div class="ua-fit-row">
+        <div class="segmented" role="radiogroup" aria-label="Version">
+          <label><input type="radio" name="ua" value="desktop" checked><span>Desktop</span></label>
+          <label><input type="radio" name="ua" value="mobile"><span>Mobile</span></label>
+        </div>
+        <label class="check" title="Zoom down to fit the sidebar if the page is wider than the sidebar">
+          <input id="fit" type="checkbox">
+          <span>Fit</span>
+        </label>
+      </div>
+
+      <label class="check">
+        <input id="save" type="checkbox">
+        <span>Add to extension menu</span>
+      </label>
+
+      <input id="name" type="text" maxlength="100" placeholder="Name" aria-label="Name" hidden>
+
+      <p id="url-error" class="error" role="alert" hidden></p>
+    </form>
+  </details>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

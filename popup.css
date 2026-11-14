@@ -1,0 +1,274 @@
+:root {
+  color-scheme: light dark;
+  --fg: #1f1f1f;
+  --muted: #5e5e5e;
+  --bg: #ffffff;
+  --hover: #f0f4f9;
+  --active: #d3e3fd;
+  --rule: #e3e3e3;
+  --border: #c4c7c5;
+  --accent: #0b57d0;
+  --accent-fg: #ffffff;
+  --error: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #e3e3e3;
+    --muted: #a8a8a8;
+    --bg: #1f1f1f;
+    --hover: #2d2f31;
+    --active: #004a77;
+    --rule: #444746;
+    --border: #5e5e5e;
+    --accent: #a8c7fa;
+    --accent-fg: #062e6f;
+    --error: #f2b8b5;
+  }
+}
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px/1.4 system-ui, sans-serif;
+}
+body {
+  width: 308px;
+  padding: 6px 0;
+}
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.menu-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 14px 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--rule);
+  font-weight: 600;
+  font-size: 14px;
+}
+.menu-title-text {
+  flex: 1;
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: -4px;
+}
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  font: 14px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+.icon-btn:hover, .icon-btn:focus-visible {
+  background: var(--hover);
+  color: var(--fg);
+  outline: none;
+}
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.icon-btn:disabled:hover {
+  background: none;
+  color: var(--muted);
+}
+.icon-btn.active {
+  background: var(--active);
+  color: var(--accent);
+}
+.actions-sep {
+  width: 1px;
+  height: 14px;
+  margin: 0 3px;
+  background: var(--rule);
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 14px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.item:hover, .item:focus-visible {
+  background: var(--hover);
+  outline: none;
+}
+.item.current {
+  background: var(--active);
+}
+
+/* "More" disclosure */
+summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+summary::-webkit-details-marker { display: none; }
+summary:hover, summary:focus-visible {
+  background: var(--hover);
+  outline: none;
+}
+.disclosure::before {
+  content: "";
+  border-style: solid;
+  border-width: 4.5px 0 4.5px 7px;
+  border-color: transparent transparent transparent currentColor;
+  transition: transform 0.12s ease;
+}
+details[open] .disclosure::before { transform: rotate(90deg); }
+details[open] summary { margin-bottom: 4px; }
+details .adhoc { padding-bottom: 2px; }
+.item:disabled {
+  color: var(--muted);
+  opacity: 0.55;
+  cursor: default;
+}
+.item:disabled:hover { background: none; }
+.icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+.title {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.key {
+  flex: none;
+  color: var(--muted);
+  font-size: 11px;
+}
+#empty {
+  padding: 7px 14px;
+  color: var(--muted);
+}
+hr {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 6px 0;
+}
+[hidden] { display: none !important; }
+
+
+/* Inline "open a URL" form, below the saved sites */
+.adhoc {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 14px;
+}
+.url-row {
+  display: flex;
+  gap: 6px;
+}
+.adhoc input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+.adhoc input[type="text"]:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+.adhoc input.invalid {
+  border-color: var(--error);
+  outline-color: var(--error);
+}
+button.primary {
+  flex: none;
+  font: inherit;
+  font-weight: 500;
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 4px 14px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  cursor: pointer;
+}
+.segmented {
+  flex: 1;
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.ua-fit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.segmented label {
+  flex: 1;
+  position: relative;
+}
+.segmented input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+}
+.segmented span {
+  display: block;
+  padding: 3px 0;
+  text-align: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+.segmented label + label span { border-left: 1px solid var(--border); }
+.segmented input:checked + span {
+  background: var(--active);
+  font-weight: 500;
+}
+.segmented input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.check input { margin: 0; accent-color: var(--accent); }
+.error {
+  margin: 0;
+  color: var(--error);
+  font-size: 12px;
+}

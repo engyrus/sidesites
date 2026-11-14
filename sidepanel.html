@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SideSites</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      font: 14px/1.5 system-ui, sans-serif;
+      color: #1f1f1f;
+      background: #fff;
+    }
+    iframe {
+      flex: none;
+      width: 100%;
+      height: 100%;
+      border: none;
+      transform-origin: 0 0;
+    }
+    #empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    #empty img { width: 64px; height: 64px; }
+    #empty button {
+      font: inherit;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 18px;
+      background: #0b57d0;
+      color: #fff;
+      cursor: pointer;
+    }
+    #empty button:hover { background: #0a4cb8; }
+    [hidden] { display: none !important; }
+    @media (prefers-color-scheme: dark) {
+      body { color: #e3e3e3; background: #1f1f1f; }
+      #empty button { background: #a8c7fa; color: #062e6f; }
+      #empty button:hover { background: #d3e3fd; }
+    }
+  </style>
+</head>
+<body>
+  <div id="empty" hidden>
+    <img src="icons/icon128.png" alt="">
+    <div>No sites are set up yet.</div>
+    <button id="manage" type="button">Add sites&hellip;</button>
+  </div>
+  <!--
+    Delegate browser features (clipboard, mic, camera, geolocation, fullscreen, etc.) to the framed
+    site via Permissions-Policy (`allow=...`). Without this, the browser blocks cross-origin iframes
+    from accessing these APIs even when the user has granted permission to the site's origin.
+  -->
+  <iframe
+    id="site"
+    hidden
+    allow="clipboard-read; clipboard-write; microphone; camera; geolocation; display-capture; fullscreen; autoplay; encrypted-media; picture-in-picture; web-share; screen-wake-lock"
+  ></iframe>
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

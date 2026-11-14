@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SideSites Settings</title>
+  <link rel="icon" href="icons/icon32.png">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icons/icon48.png" alt="" width="40" height="40">
+      <h1>SideSites</h1>
+    </header>
+
+    <p class="intro">
+      These sites appear in the menu when you click the SideSites toolbar button, in the order shown here.
+      Drag a site by its handle (or use the arrow buttons) to rearrange the list. Changes are saved automatically.
+    </p>
+
+    <section>
+      <h2>Your sites</h2>
+      <ol id="sites" aria-label="Sites"></ol>
+      <p id="empty" class="muted" hidden>You haven't added any sites yet.</p>
+    </section>
+
+    <section>
+      <h2>Add a site</h2>
+      <form id="add" autocomplete="off" novalidate>
+        <label>
+          <span>Title</span>
+          <input id="add-title" type="text" placeholder="e.g. Google Messages" maxlength="100">
+        </label>
+        <label>
+          <span>URL</span>
+          <input id="add-url" type="text" inputmode="url" placeholder="e.g. https://messages.google.com/web/" required>
+        </label>
+        <div class="field">
+          <span>Version</span>
+          <button id="add-ua" type="button" class="ua"></button>
+        </div>
+        <label class="fit-check" title="Zoom down to fit the sidebar if the page is wider than the sidebar">
+          <input id="add-fit" type="checkbox">
+          <span>Fit</span>
+        </label>
+        <button type="submit" class="primary">Add site</button>
+      </form>
+      <p id="add-error" class="error" role="alert" hidden></p>
+    </section>
+
+    <section>
+      <h2>Popular sites</h2>
+      <p class="muted">Click a site to add it to your list. You can rename it or change its settings above afterward.</p>
+      <div id="popular" class="popular-groups"></div>
+    </section>
+
+    <section class="notes">
+      <h2>Notes</h2>
+      <ul>
+        <li>The <b>Desktop</b>/<b>Mobile</b> button picks which version of a site you get. <b>Mobile</b> makes SideSites identify your browser to the site as Chrome on an Android phone, which often gives a layout better suited to the narrow side panel. The setting applies to every site on the same host name.</li>
+        <li>The <b>Fit</b> checkbox zooms a site down when its layout is wider than the side panel, and smoothly zooms it back up as you widen the side panel.</li>
+        <li>Sites in the side panel share the cookies of your normal browser profile. If signing in to a site inside the side panel doesn't work, sign in using a regular tab, then reload the site in the side panel. (Note: Gmail does not currently work in the side panel; we're working on it.)</li>
+        <li>To let sites load in the side panel, SideSites removes the headers that forbid framing &mdash; but only for pages loaded in the side panel. Pages in ordinary tabs are unaffected.</li>
+        <li>Pressing <kbd>1</kbd>&ndash;<kbd>9</kbd> in the SideSites menu opens the corresponding site. You can assign a shortcut to open the menu at <a href="#" id="shortcuts">chrome://extensions/shortcuts</a>.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    Copyright &copy; 2026 Jerry Kindall &lt;<a href="mailto:engyrus@gmail.com?subject=SideSites%20extension">engyrus@gmail.com</a>&gt;
+  </footer>
+
+  <template id="row-template">
+    <li class="site" draggable="false">
+      <span class="handle" title="Drag to reorder" aria-hidden="true">&#x2630;</span>
+      <img class="favicon" alt="" width="16" height="16">
+      <input class="title" type="text" aria-label="Title" maxlength="100">
+      <input class="url" type="text" inputmode="url" aria-label="URL">
+      <button type="button" class="ua"></button>
+      <label class="fit-check" title="Zoom down to fit the sidebar if the page is wider than the sidebar">
+        <input class="fit" type="checkbox">
+        <span>Fit</span>
+      </label>
+      <span class="buttons">
+        <button type="button" class="up" title="Move up" aria-label="Move up">&#x25B2;</button>
+        <button type="button" class="down" title="Move down" aria-label="Move down">&#x25BC;</button>
+        <button type="button" class="remove" title="Remove" aria-label="Remove">&#x2715;</button>
+      </span>
+    </li>
+  </template>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

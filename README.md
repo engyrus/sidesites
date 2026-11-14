@@ -16,15 +16,20 @@ browser's native side panel, including sites that normally refuse to be shown in
 - **Fit to sidebar width**: Each site has a **Fit** checkbox. When checked, if a site's minimum layout width is wider than the
   side panel, SideSites scales the frame down to fit and smoothly scales it back up toward 100% as you widen the side panel
   (remembering the discovered width across reloads).
+- **Sidebar toolbar in the menu**: The top bar of the SideSites menu includes quick controls for the active side panel site:
+  - **Desktop / Mobile** toggle (switches the current site between Desktop and Mobile mode and reloads it).
+  - **Fit** toggle (toggles zoom-to-fit on the current site immediately without reloading).
+  - **Back**, **Forward**, and **Reload** buttons to navigate the sidebar's history or reload the current page in place (without resetting to the site's starting URL).
 - **One-click popular sites**: The settings page includes categorized buttons (Chat, Music, AI assistants, Productivity,
-  Reference, Social) to add popular sites with sensible defaults.
+  Reference, Social, Shopping) to add popular sites with sensible defaults.
 - **Keyboard friendly**: In the menu, press **`1`**–**`9`** to open the corresponding site, or use the arrow keys and **`Enter`**.
-- **Open any URL**: Below your saved sites, a **More** disclosure triangle (which remembers whether you left it open) reveals:
+- **Manage sites…**: Located directly below your saved sites list to open the settings page.
+- **Open any URL**: Below **Manage sites…**, a **More** disclosure triangle (which remembers whether you left it open) reveals:
   - **Open side site in a new tab**: opens the page the sidebar is currently showing in a regular tab.
   - **Open current tab as side site**: shows the current tab's page in the sidebar.
-  - **Manage sites…**
-  - A URL field (which fills in the current tab's address when you click into it), a Desktop/Mobile selector, and an
-    **Add to extension menu** checkbox that reveals a name field. Press **Go** (or **`Enter`**) to open the URL in the sidebar.
+  - A URL field (which fills in the current tab's address when you click into it), a Desktop/Mobile selector, a **Fit**
+    checkbox, and an **Add to extension menu** checkbox that reveals a name field. Press **Go** (or **`Enter`**) to open the
+    URL in the sidebar.
 - **Per-window**: Each browser window's side panel can show a different site.
 - **Remembers your last site**: When a side panel opens without you choosing a site (e.g. from the browser's own side
   panel menu), it shows the site you used last.
@@ -51,8 +56,9 @@ extension page overrides the page's `navigator` properties to match.
 
 A small content script (`frame-reporter.js`) runs in every page but does nothing unless the page is framed directly by
 SideSites' side panel. There, it reports the page's current URL to the side panel (which can't read a cross-origin frame's
-address itself), so **Open side site in a new tab** opens the page you're actually looking at, and measures the page's
-content width when **Fit** is enabled.
+address itself) so **Open side site in a new tab** opens the page you're actually looking at, measures the page's content
+width when **Fit** is enabled, hides the frame's scrollbar gutter so `100vw` layouts aren't overlapped, and handles
+Back/Forward/Reload navigation from the menu.
 
 ### Permissions justification (Chrome Web Store)
 
@@ -87,7 +93,6 @@ content width when **Fit** is enabled.
   session restrictions); we're working on it.
 - Some sites detect that they're framed using JavaScript, or refuse to let you sign in inside a frame. If signing in doesn't
   work in the side panel, sign in using a regular tab, then reopen the site in the side panel.
-- **Close sidebar** appears in the menu only on browsers that support `chrome.sidePanel.close()` (Chrome 141 and later).
 - Mobile mode changes what the site is *told*, not the device: touch-only features and `pointer: coarse` media queries
   still reflect your real mouse and keyboard. Requests a site's service worker makes in the background also aren't tied to
   a tab, so a Mobile site's service worker may fetch mobile content even while you're using that site in a regular tab.

@@ -24,16 +24,23 @@
       min-height: 0;
       overflow: hidden;
     }
-    body.split-active #pane-top {
+    .pane-top {
+      order: 1;
+    }
+    .pane-bottom {
+      order: 3;
+    }
+    body.split-active .pane-top {
       flex: none;
       height: calc(var(--split, 50%) - 2px);
       min-height: 80px;
     }
-    body.split-active #pane-bottom {
+    body.split-active .pane-bottom {
       flex: 1;
       min-height: 80px;
     }
     #splitter {
+      order: 2;
       flex: none;
       height: 4px;
       background: #e3e3e3;
@@ -54,26 +61,30 @@
     body.dragging iframe {
       pointer-events: none;
     }
-    body.split-active .pane.focused::before,
-    body.split-active .pane.focused::after {
+    .focus-triangle {
+      display: none;
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 17px;
+      height: 17px;
+      background: rgba(0, 0, 0, 0.55);
+      clip-path: polygon(0 0, 100% 0, 100% 100%);
+      z-index: 10;
+      cursor: pointer;
+    }
+    .focus-triangle::after {
       content: "";
       position: absolute;
       top: 0;
       right: 0;
-      width: 0;
-      height: 0;
-      border-style: solid;
-      pointer-events: none;
+      width: 15px;
+      height: 15px;
+      background: #0b57d0;
+      clip-path: polygon(0 0, 100% 0, 100% 100%);
     }
-    body.split-active .pane.focused::before {
-      border-width: 0 17px 17px 0;
-      border-color: transparent rgba(0, 0, 0, 0.55) transparent transparent;
-      z-index: 10;
-    }
-    body.split-active .pane.focused::after {
-      border-width: 0 15px 15px 0;
-      border-color: transparent #0b57d0 transparent transparent;
-      z-index: 11;
+    body.split-active .pane.focused .focus-triangle {
+      display: block;
     }
     iframe {
       display: block;
@@ -137,9 +148,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #e3e3e3;
+      margin-bottom: 6px;
     }
     .pane-picker-row {
       display: flex;
@@ -206,6 +215,20 @@
       color: #b3261e;
       font-size: 12px;
     }
+    .pane-picker-remember {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 4px 10px 0;
+      font-size: 12px;
+      color: #5e5e5e;
+      cursor: pointer;
+    }
+    .pane-picker-remember input {
+      margin: 0;
+      accent-color: #0b57d0;
+    }
     #empty {
       flex: 1;
       display: flex;
@@ -233,12 +256,13 @@
       #splitter { background: #444746; }
       #splitter:hover,
       body.dragging #splitter { background: #a8c7fa; }
-      body.split-active .pane.focused::after { border-color: transparent #a8c7fa transparent transparent; }
+      .focus-triangle::after { background: #a8c7fa; }
       .pane-picker { background: #1f1f1f; }
       .pane-picker-title { color: #a8a8a8; }
       .pane-picker-btn:hover,
       .pane-picker-btn:focus-visible { background: #2d2f31; }
-      .pane-picker-form { border-top-color: #444746; }
+      .pane-picker-remember { color: #a8a8a8; }
+      .pane-picker-remember input { accent-color: #a8c7fa; }
       .pane-picker-input { border-color: #5e5e5e; }
       .pane-picker-input:focus { outline-color: #a8c7fa; }
       .pane-picker-input.invalid { border-color: #f2b8b5; outline-color: #f2b8b5; }
@@ -266,19 +290,21 @@
     site via Permissions-Policy (`allow=...`). Without this, the browser blocks cross-origin iframes
     from accessing these APIs even when the user has granted permission to the site's origin.
   -->
-  <div id="pane-top" class="pane focused" hidden>
+  <div id="pane-top" class="pane pane-top focused" hidden>
     <iframe
       id="site"
       allow="clipboard-read; clipboard-write; microphone; camera; geolocation; display-capture; fullscreen; autoplay; encrypted-media; picture-in-picture; web-share; screen-wake-lock"
     ></iframe>
+    <div class="focus-triangle" title="Right-click to zoom full"></div>
     <div id="picker-top" class="pane-picker" hidden></div>
   </div>
   <div id="splitter" hidden aria-label="Resize split panes" role="separator"></div>
-  <div id="pane-bottom" class="pane" hidden>
+  <div id="pane-bottom" class="pane pane-bottom" hidden>
     <iframe
       id="site-bottom"
       allow="clipboard-read; clipboard-write; microphone; camera; geolocation; display-capture; fullscreen; autoplay; encrypted-media; picture-in-picture; web-share; screen-wake-lock"
     ></iframe>
+    <div class="focus-triangle" title="Right-click to zoom full"></div>
     <div id="picker-bottom" class="pane-picker" hidden></div>
   </div>
   <script type="module" src="sidepanel.js"></script>

@@ -37,10 +37,17 @@ chrome.sidePanel.getLayout?.().then((layout) => {
 
 // Look these up before the user clicks anything: chrome.sidePanel.open() must be called while the
 // click's user gesture is still active, so we can't await anything before calling it.
+const REMEMBER_SPLIT_PANE_KEY = 'rememberSplitPane';
+const LAST_PANE_SITE_KEY = 'lastPaneSite';
+
 const { id: windowId } = await chrome.windows.getCurrent();
 const sites = await getSites();
 const { [windowKey(windowId)]: requested } = await chrome.storage.session.get(windowKey(windowId));
-const { [LAST_SITE_KEY]: lastId } = await chrome.storage.local.get(LAST_SITE_KEY);
+const {
+  [LAST_SITE_KEY]: lastId,
+  [REMEMBER_SPLIT_PANE_KEY]: rememberSplitPane = false,
+  [LAST_PANE_SITE_KEY]: lastPaneSites = {},
+} = await chrome.storage.local.get([LAST_SITE_KEY, REMEMBER_SPLIT_PANE_KEY, LAST_PANE_SITE_KEY]);
 const panelOpen = await isSidePanelOpen();
 const splitActive = panelOpen && requested?.mode === 'split';
 const focusedPane = splitActive && requested.focused === 'bottom' ? 'bottom' : 'top';
@@ -86,7 +93,9 @@ function chooseSite(site, { target = null, saveList = null } = {}) {
   let payload;
   if (effectiveTarget === 'top' || effectiveTarget === 'bottom') {
     const otherPane = effectiveTarget === 'top' ? 'bottom' : 'top';
-    const otherSite = splitActive ? requested[otherPane] : null;
+    const otherSite = splitActive
+      ? requested[otherPane]
+      : (rememberSplitPane ? lastPaneSites[otherPane] ?? null : null);
     payload = {
       mode: 'split',
       focused: effectiveTarget,
@@ -274,15 +283,21 @@ toggleSplitBtn.addEventListener('click', () => {
   if (splitActive) {
     const keepSite = activeSite ?? requested.top ?? requested.bottom;
     if (!keepSite) return;
-    setSplitState({ ...toPayload(keepSite), ts: Date.now() });
+    setSplitState({
+      ...toPayload(keepSite),
+      keepPane: activeSite ? focusedPane : (requested.top ? 'top' : 'bottom'),
+      keepIfSame: true,
+      ts: Date.now(),
+    });
     return;
   }
   if (!activeSite) return;
+  const rememberedBottom = rememberSplitPane ? lastPaneSites.bottom ?? null : null;
   setSplitState({
     mode: 'split',
-    focused: 'bottom',
+    focused: rememberedBottom ? 'top' : 'bottom',
     top: toPayload(activeSite),
-    bottom: null,
+    bottom: rememberedBottom ? toPayload(rememberedBottom) : null,
     ts: Date.now(),
   });
 });
@@ -295,16 +310,17 @@ toggleSplitBtn.addEventListener('contextmenu', (event) => {
       focused: focusedPane === 'top' ? 'bottom' : 'top',
       top: requested.bottom ?? null,
       bottom: requested.top ?? null,
-      reloadPane: 'both',
+      swap: true,
       ts: Date.now(),
     });
     return;
   }
   if (!activeSite) return;
+  const rememberedTop = rememberSplitPane ? lastPaneSites.top ?? null : null;
   setSplitState({
     mode: 'split',
-    focused: 'top',
-    top: null,
+    focused: rememberedTop ? 'bottom' : 'top',
+    top: rememberedTop ? toPayload(rememberedTop) : null,
     bottom: toPayload(activeSite),
     reloadPane: 'bottom',
     ts: Date.now(),

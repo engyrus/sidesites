@@ -4,6 +4,8 @@ import {
 } from './sites.js';
 
 const SPLIT_RATIO_KEY = 'splitRatio';
+const REMEMBER_SPLIT_PANE_KEY = 'rememberSplitPane';
+const LAST_PANE_SITE_KEY = 'lastPaneSite';
 
 const empty = document.getElementById('empty');
 const splitter = document.getElementById('splitter');
@@ -15,12 +17,21 @@ const myKey = windowKey(windowId);
 const {
   [SITE_FIT_KEY]: savedFits = {},
   [SPLIT_RATIO_KEY]: savedRatio = 0.5,
-} = await chrome.storage.local.get([SITE_FIT_KEY, SPLIT_RATIO_KEY]);
+  [REMEMBER_SPLIT_PANE_KEY]: savedRememberSplitPane = false,
+  [LAST_PANE_SITE_KEY]: savedLastPaneSites = {},
+} = await chrome.storage.local.get([
+  SITE_FIT_KEY,
+  SPLIT_RATIO_KEY,
+  REMEMBER_SPLIT_PANE_KEY,
+  LAST_PANE_SITE_KEY,
+]);
 
 let lastRequestTs = null;
 let splitMode = false;
 let focusedPane = 'top';
 let splitRatio = Math.min(0.85, Math.max(0.15, Number(savedRatio) || 0.5));
+let rememberSplitPane = Boolean(savedRememberSplitPane);
+const lastPaneSites = { ...savedLastPaneSites };
 let saveFitTimer = null;
 
 const panes = {
@@ -67,8 +78,23 @@ function setFocusedPane(name, { persist = true } = {}) {
   }
 }
 
+function swapPanes() {
+  const prevTop = panes.top;
+  const prevBottom = panes.bottom;
+  panes.top = prevBottom;
+  panes.bottom = prevTop;
+  panes.top.name = 'top';
+  panes.bottom.name = 'bottom';
+  panes.top.el.classList.remove('pane-bottom');
+  panes.top.el.classList.add('pane-top');
+  panes.bottom.el.classList.remove('pane-top');
+  panes.bottom.el.classList.add('pane-bottom');
+  if (focusedPane === 'top') focusedPane = 'bottom';
+  else if (focusedPane === 'bottom') focusedPane = 'top';
+}
+
 function updateDocumentTitle() {
-  const active = panes[focusedPane]?.site ?? panes.top.site;
+  const active = splitMode ? panes[focusedPane]?.site : panes.top?.site;
   document.title = active?.title || 'SideSites';
 }
 
@@ -92,8 +118,12 @@ function applyFitScale(pane) {
 }
 
 function applyAllFitScales() {
-  applyFitScale(panes.top);
-  if (splitMode) applyFitScale(panes.bottom);
+  if (splitMode) {
+    applyFitScale(panes.top);
+    applyFitScale(panes.bottom);
+  } else {
+    applyFitScale(panes.top);
+  }
 }
 
 /** Remembers a pane's required width, sidebar width, and zoom factor across reloads. */
@@ -108,8 +138,8 @@ function rememberFit(pane) {
 
 const paneObserver = new ResizeObserver((entries) => {
   for (const entry of entries) {
-    if (entry.target === panes.top.el) applyFitScale(panes.top);
-    else if (entry.target === panes.bottom.el && splitMode) applyFitScale(panes.bottom);
+    if (entry.target === panes.top.el && !panes.top.el.hidden) applyFitScale(panes.top);
+    else if (entry.target === panes.bottom.el && !panes.bottom.el.hidden) applyFitScale(panes.bottom);
   }
 });
 paneObserver.observe(panes.top.el);
@@ -314,10 +344,23 @@ function showPanePicker(pane, sites) {
   row.append(input, uaBtn, fitBtn, goBtn);
   form.append(row, error);
 
+  const rememberLabel = document.createElement('label');
+  rememberLabel.className = 'pane-picker-remember';
+  const rememberBox = document.createElement('input');
+  rememberBox.type = 'checkbox';
+  rememberBox.checked = rememberSplitPane;
+  rememberBox.addEventListener('change', () => {
+    rememberSplitPane = rememberBox.checked;
+    chrome.storage.local.set({ [REMEMBER_SPLIT_PANE_KEY]: rememberSplitPane });
+  });
+  const rememberText = document.createElement('span');
+  rememberText.textContent = 'Remember last site opened in this pane';
+  rememberLabel.append(rememberBox, rememberText);
+
   pane.picker.onpointerdown = () => {
     if (splitMode && focusedPane !== pane.name) setFocusedPane(pane.name);
   };
-  pane.picker.append(title, list, form);
+  pane.picker.append(title, form, list, rememberLabel);
   pane.picker.hidden = false;
 }
 
@@ -376,11 +419,24 @@ async function loadPane(pane, site, { forceReload = false } = {}) {
   if (pane.name === focusedPane || !splitMode) {
     chrome.storage.local.set({ [LAST_SITE_KEY]: site.id });
   }
+  if (splitMode) {
+    lastPaneSites[pane.name] = {
+      id: site.id,
+      title: site.title,
+      url: site.url,
+      userAgent: site.userAgent ?? UA_DESKTOP,
+      fit: Boolean(site.fit),
+    };
+    chrome.storage.local.set({ [LAST_PANE_SITE_KEY]: lastPaneSites });
+  }
 }
 
 async function applyRequest(request, sites) {
   empty.hidden = true;
   if (request.mode === 'split') {
+    if (splitMode && request.swap) {
+      swapPanes();
+    }
     splitMode = true;
     document.body.classList.add('split-active');
     panes.top.el.hidden = false;
@@ -404,6 +460,18 @@ async function applyRequest(request, sites) {
       showPanePicker(panes.bottom, sites);
     }
   } else {
+    const site = resolve(request, sites);
+    const fromBottom =
+      request.keepPane === 'bottom' ||
+      (request.keepIfSame &&
+        panes.bottom.site &&
+        panes.bottom.site.id === site.id &&
+        panes.bottom.site.url === site.url &&
+        isMobile(panes.bottom.site) === isMobile(site) &&
+        panes.top.site?.id !== site.id);
+    if (fromBottom) {
+      swapPanes();
+    }
     splitMode = false;
     document.body.classList.remove('split-active');
     panes.top.el.hidden = false;
@@ -411,9 +479,8 @@ async function applyRequest(request, sites) {
     panes.bottom.el.hidden = true;
     clearPane(panes.bottom);
     setFocusedPane('top', { persist: false });
-    const site = resolve(request, sites);
     hidePanePicker(panes.top);
-    await loadPane(panes.top, site, { forceReload: true });
+    await loadPane(panes.top, site, { forceReload: !request.keepIfSame });
   }
 }
 
@@ -507,7 +574,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const sites = changes[SITES_KEY].newValue ?? [];
     const oldSites = changes[SITES_KEY].oldValue ?? [];
     const activePanes = splitMode ? [panes.top, panes.bottom] : [panes.top];
-    if (!panes.top.site) {
+    if (!panes.top.site && !splitMode) {
       loadInitial();
       return;
     }
@@ -544,5 +611,26 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     setFocusedPane(msg.pane);
   }
 });
+
+for (const pane of [panes.top, panes.bottom]) {
+  pane.el.querySelector('.focus-triangle')?.addEventListener('contextmenu', async (event) => {
+    event.preventDefault();
+    if (!splitMode || !pane.site) return;
+    const sitePayload = {
+      id: pane.site.id,
+      title: pane.site.title,
+      url: pane.site.url,
+      userAgent: pane.site.userAgent ?? UA_DESKTOP,
+      fit: Boolean(pane.site.fit),
+      keepPane: pane.name,
+      keepIfSame: true,
+      ts: Date.now(),
+    };
+    lastRequestTs = sitePayload.ts;
+    await chrome.storage.session.set({ [myKey]: sitePayload });
+    const sites = await getSites();
+    await applyRequest(sitePayload, sites);
+  });
+}
 
 await loadInitial();

@@ -372,6 +372,15 @@ addForm.addEventListener('submit', (event) => {
 
 // ---- Misc ----
 
+const REMEMBER_SPLIT_PANE_KEY = 'rememberSplitPane';
+const rememberSplitBox = document.getElementById('remember-split-pane');
+chrome.storage.local.get(REMEMBER_SPLIT_PANE_KEY).then(({ [REMEMBER_SPLIT_PANE_KEY]: val }) => {
+  rememberSplitBox.checked = Boolean(val);
+});
+rememberSplitBox.addEventListener('change', () => {
+  chrome.storage.local.set({ [REMEMBER_SPLIT_PANE_KEY]: rememberSplitBox.checked });
+});
+
 document.getElementById('shortcuts').addEventListener('click', (event) => {
   event.preventDefault();
   chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
@@ -379,6 +388,10 @@ document.getElementById('shortcuts').addEventListener('click', (event) => {
 
 // Pick up changes made elsewhere (another settings tab, or sync from another device).
 chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes[REMEMBER_SPLIT_PANE_KEY]) {
+    rememberSplitBox.checked = Boolean(changes[REMEMBER_SPLIT_PANE_KEY].newValue);
+    return;
+  }
   if (area !== 'sync' || !changes[SITES_KEY]) return;
   const incoming = changes[SITES_KEY].newValue ?? [];
   if (JSON.stringify(incoming) === JSON.stringify(sites)) return;

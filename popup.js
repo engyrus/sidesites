@@ -8,23 +8,8 @@ const urlForm = document.getElementById('url-form');
 const urlInput = document.getElementById('url');
 const adhocUaBtn = document.getElementById('adhoc-ua');
 const adhocFitBtn = document.getElementById('adhoc-fit');
-const saveBox = document.getElementById('save');
 const nameInput = document.getElementById('name');
 const urlError = document.getElementById('url-error');
-const more = document.getElementById('more');
-
-// Restore the "More" disclosure first, so the menu doesn't visibly jump.
-const MORE_OPEN_KEY = 'menuMoreOpen';
-const { [MORE_OPEN_KEY]: moreOpen } = await chrome.storage.local.get(MORE_OPEN_KEY);
-more.open = Boolean(moreOpen);
-let autoOpened = false; // opened by us (not the user), so don't remember it
-more.addEventListener('toggle', () => {
-  if (autoOpened) {
-    autoOpened = false;
-    return;
-  }
-  chrome.storage.local.set({ [MORE_OPEN_KEY]: more.open });
-});
 
 // The arrows on "Open side site in a new tab" / "Open current tab as side site" point away from and
 // toward the sidebar. The HTML assumes it's on the right (Chrome's default); flip them if the user has
@@ -438,24 +423,17 @@ urlInput.addEventListener('focus', () => {
   if (prefilled || urlInput.value || !currentTabUrl) return;
   prefilled = true;
   urlInput.value = currentTabUrl;
-  updateNamePlaceholder();
+  updateNameVisibility();
   urlInput.select();
 });
 
-function updateNamePlaceholder() {
-  const url = normalizeUrl(urlInput.value);
-  nameInput.placeholder = url ? `Name (${hostnameOf(url)})` : 'Name';
+function updateNameVisibility() {
+  nameInput.hidden = !urlInput.value.trim();
 }
 
 urlInput.addEventListener('input', () => {
   showUrlError('');
-  updateNamePlaceholder();
-});
-
-saveBox.addEventListener('change', () => {
-  nameInput.hidden = !saveBox.checked;
-  updateNamePlaceholder();
-  if (saveBox.checked) nameInput.focus();
+  updateNameVisibility();
 });
 
 let adhocUa = UA_DESKTOP;
@@ -482,24 +460,24 @@ function submitAdhocUrl(target = null) {
   }
   const userAgent = adhocUa;
   const fit = adhocFit;
-  const title = nameInput.value.trim() || hostnameOf(url);
+  const name = nameInput.value.trim();
 
-  if (!saveBox.checked) {
+  if (!name) {
     // A one-off visit: not added to the saved list.
-    chooseSite({ id: `adhoc:${newId()}`, title, url, userAgent, fit }, { target });
+    chooseSite({ id: `adhoc:${newId()}`, title: hostnameOf(url), url, userAgent, fit }, { target });
     return;
   }
 
   // If an identical site is already in the menu, just update it rather than adding a duplicate.
   const existing = sites.find((s) => s.url === url);
   if (existing) {
-    existing.title = nameInput.value.trim() || existing.title;
+    existing.title = name;
     existing.userAgent = userAgent;
     existing.fit = fit;
     chooseSite(existing, { target, saveList: sites });
     return;
   }
-  const site = { id: newId(), title, url, userAgent, fit };
+  const site = { id: newId(), title: name, url, userAgent, fit };
   chooseSite(site, { target, saveList: [...sites, site] });
 }
 
@@ -515,14 +493,9 @@ goBtn.addEventListener('contextmenu', (event) => {
   showContextMenu((target) => submitAdhocUrl(target), event.clientX, event.clientY);
 });
 
-// Start with focus on the current (or first) saved site. With no saved sites, reveal the URL form
-// (without remembering that as the user's choice) and focus the URL field.
+// Start with focus on the current (or first) saved site, or the URL field when empty.
 if (sites.length) {
   document.querySelector('#sites .item.current, #sites .item')?.focus();
 } else {
-  if (!more.open) {
-    autoOpened = true;
-    more.open = true;
-  }
   urlInput.focus();
 }

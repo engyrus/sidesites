@@ -37,43 +37,32 @@
   </button>
   <hr>
 
-  <details id="more">
-    <summary>
-      <span class="icon disclosure" aria-hidden="true"></span><span class="title">More</span>
-    </summary>
+  <button id="sidebar-to-tab" class="item" type="button">
+    <span id="sidebar-to-tab-icon" class="icon" aria-hidden="true">&#x2196;</span><span class="title">Open side site in a new tab</span>
+  </button>
+  <button id="tab-to-sidebar" class="item" type="button">
+    <span id="tab-to-sidebar-icon" class="icon" aria-hidden="true">&#x21E5;</span><span class="title">Open current tab as side site</span>
+  </button>
 
-    <button id="sidebar-to-tab" class="item" type="button">
-      <span id="sidebar-to-tab-icon" class="icon" aria-hidden="true">&#x2196;</span><span class="title">Open side site in a new tab</span>
-    </button>
-    <button id="tab-to-sidebar" class="item" type="button">
-      <span id="tab-to-sidebar-icon" class="icon" aria-hidden="true">&#x21E5;</span><span class="title">Open current tab as side site</span>
-    </button>
+  <hr>
 
-    <hr>
+  <form id="url-form" class="adhoc" autocomplete="off" novalidate aria-label="Open a URL in the sidebar">
+    <div class="url-row">
+      <input id="url" type="text" inputmode="url" placeholder="Open URL in sidebar&hellip;" spellcheck="false" aria-label="URL">
+      <button id="adhoc-ua" class="icon-btn" type="button" title="Desktop version (click for Mobile)" aria-label="Toggle Desktop/Mobile"></button>
+      <button id="adhoc-fit" class="icon-btn" type="button" title="Fit to sidebar: Off" aria-label="Toggle Fit" aria-pressed="false">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+          <path d="M5 8h6M6.5 6.5 5 8l1.5 1.5M9.5 6.5 11 8l-1.5 1.5"/>
+        </svg>
+      </button>
+      <button id="go" type="submit" class="icon-btn primary-icon" title="Open in sidebar" aria-label="Go">&#x2192;</button>
+    </div>
 
-    <form id="url-form" class="adhoc" autocomplete="off" novalidate aria-label="Open a URL in the sidebar">
-      <div class="url-row">
-        <input id="url" type="text" inputmode="url" placeholder="Open URL in sidebar&hellip;" spellcheck="false" aria-label="URL">
-        <button id="adhoc-ua" class="icon-btn" type="button" title="Desktop version (click for Mobile)" aria-label="Toggle Desktop/Mobile"></button>
-        <button id="adhoc-fit" class="icon-btn" type="button" title="Fit to sidebar: Off" aria-label="Toggle Fit" aria-pressed="false">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="2" y="3" width="12" height="10" rx="1.5"/>
-            <path d="M5 8h6M6.5 6.5 5 8l1.5 1.5M9.5 6.5 11 8l-1.5 1.5"/>
-          </svg>
-        </button>
-        <button id="go" type="submit" class="icon-btn primary-icon" title="Open in sidebar" aria-label="Go">&#x2192;</button>
-      </div>
+    <input id="name" type="text" maxlength="100" placeholder="Enter name to add to extension menu" aria-label="Name" hidden>
 
-      <label class="check">
-        <input id="save" type="checkbox">
-        <span>Add to extension menu</span>
-      </label>
-
-      <input id="name" type="text" maxlength="100" placeholder="Name" aria-label="Name" hidden>
-
-      <p id="url-error" class="error" role="alert" hidden></p>
-    </form>
-  </details>
+    <p id="url-error" class="error" role="alert" hidden></p>
+  </form>
 
   <div id="context-menu" class="context-menu" role="menu" hidden>
     <button type="button" role="menuitem" data-target="full">Open Full</button>

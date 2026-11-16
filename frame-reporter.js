@@ -216,18 +216,6 @@
     else if (event.data.action === 'reload') location.reload();
   });
 
-  // Notify the side panel when the user interacts with this frame so split mode can focus it.
-  let lastActiveReport = 0;
-  const reportActive = () => {
-    const now = Date.now();
-    if (now - lastActiveReport < 250) return;
-    lastActiveReport = now;
-    window.parent.postMessage({ type: 'sidesites-pane-active' }, parentOrigin);
-  };
-  for (const evt of ['pointerdown', 'focusin', 'keydown', 'wheel']) {
-    window.addEventListener(evt, reportActive, { capture: true, passive: true });
-  }
-
   reportUrl();
   window.navigation?.addEventListener('currententrychange', reportUrl);
   window.addEventListener('popstate', reportUrl);

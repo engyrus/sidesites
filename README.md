@@ -25,11 +25,11 @@ browser's native side panel, including sites that normally refuse to be shown in
   Reference, Social, Shopping) to add popular sites with sensible defaults.
 - **Keyboard friendly**: In the menu, press **`1`**–**`9`** to open the corresponding site, or use the arrow keys and **`Enter`**.
 - **Manage sites and settings…**: Located directly below your saved sites list to open the settings page.
-- **Open any URL**: Below **Manage sites and settings…**, a **More** disclosure triangle (which remembers whether you left it open) reveals:
+- **Open any URL**: Below **Manage sites and settings…**, you'll find:
   - **Open side site in a new tab**: opens the page the sidebar is currently showing in a regular tab.
   - **Open current tab as side site**: shows the current tab's page in the sidebar.
   - A URL field (which fills in the current tab's address when you click into it) with inline **Desktop/Mobile** and **Fit**
-    icon toggles, an **Add to extension menu** checkbox that reveals a name field, and a **`→`** submit button (or press **`Enter`**).
+    icon toggles, a name field that appears once you enter a URL (enter a name to also save the site to the extension menu), and a **`→`** submit button (or press **`Enter`**).
 - **Per-window**: Each browser window's side panel can show a different site (or split pair).
 - **Remembers your last site**: When a side panel opens without you choosing a site (e.g. from the browser's own side
   panel menu), it shows the site you used last.
@@ -42,11 +42,12 @@ SideSites can display two sites at once in a top/bottom split inside the side pa
   - Click the **Split** button in the menu header to keep the current site on **Top** and open a site picker in the **Bottom** pane (or **right-click** the **Split** button to put the current site on **Bottom** and the picker on **Top**).
   - Or **right-click** any saved site, **Open current tab as side site**, or the **`→`** submit button and choose **Open in Top** or **Open in Bottom**.
 - **Filling the second pane:** Use the ad-hoc URL bar at the top of the in-pane picker (with its own Desktop/Mobile and Fit toggles), pick any saved site below it, or choose a site from the extension menu. Check **Remember last site opened in this pane** at the bottom of the picker to automatically reopen your last second-pane site instead of showing the picker each time you split (you can turn this off later in **Manage sites and settings…**).
-- **Pane focus:** Interacting with a pane (clicking, typing, or scrolling) or loading a site into it focuses that pane, indicated by a small triangle in its top-right corner. Left-clicking a site in the menu, pressing **`1`**–**`9`**, using the header controls (**Desktop/Mobile**, **Fit**, **Back/Forward/Reload**), and **Open side site in a new tab** all apply to the focused pane.
+- **Pane focus:** Hovering over a pane or loading a site into it focuses that pane, indicated by an **×** close button in its top-right corner. Left-clicking a site in the menu, pressing **`1`**–**`9`**, using the header controls (**Desktop/Mobile**, **Fit**, **Back/Forward/Reload**), and **Open side site in a new tab** all apply to the focused pane.
 - **Resizing, swapping, and exiting:**
   - Drag the divider between panes to resize (persisted across sessions), or **double-click** the divider to snap back to 50/50.
   - **Right-click** the **Split** button while already in split mode to swap the Top and Bottom panes without reloading either site.
-  - **Right-click** the focus triangle in the top-right corner of the focused pane, **left-click** the **Split** button, or right-click a menu item and choose **Open Full** to zoom the focused pane to full height and exit split mode without reloading it.
+  - **Click** the **×** close button in the top-right corner of the focused pane to close that pane and expand the other pane to full height without reloading it.
+  - **Right-click** (or **Ctrl+click**) the **×** close button, **left-click** the **Split** button, or right-click a menu item and choose **Open Full** to close the other pane and expand the focused pane to full height without reloading it.
 
 ## How it works
 

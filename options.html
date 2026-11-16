@@ -13,65 +13,114 @@
       <h1>SideSites</h1>
     </header>
 
-    <p class="intro">
-      These sites appear in the menu when you click the SideSites toolbar button, in the order shown here.
-      Drag a site by its handle (or use the arrow buttons) to rearrange the list. Changes are saved automatically.
-    </p>
+    <nav class="tabs" role="tablist" aria-label="Settings sections">
+      <button id="tab-btn-sites" type="button" class="tab" role="tab" data-tab="sites" aria-selected="true" aria-controls="tab-sites">Sites</button>
+      <button id="tab-btn-pairs" type="button" class="tab" role="tab" data-tab="pairs" aria-selected="false" aria-controls="tab-pairs">Pairs</button>
+      <button id="tab-btn-settings" type="button" class="tab" role="tab" data-tab="settings" aria-selected="false" aria-controls="tab-settings">Settings</button>
+    </nav>
 
-    <section>
-      <h2>Your sites</h2>
-      <ol id="sites" aria-label="Sites"></ol>
-      <p id="empty" class="muted" hidden>You haven't added any sites yet.</p>
-    </section>
+    <div id="tab-sites" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-sites">
+      <p class="intro">
+        These sites appear in the menu when you click the SideSites toolbar button, in the order shown here.
+        Drag a site by its handle (or use the arrow buttons) to rearrange the list. Changes are saved automatically.
+      </p>
 
-    <section>
-      <h2>Add a site</h2>
-      <form id="add" autocomplete="off" novalidate>
-        <label>
-          <span>Title</span>
-          <input id="add-title" type="text" placeholder="e.g. Google Messages" maxlength="100">
+      <section>
+        <h2>Your sites</h2>
+        <ol id="sites" aria-label="Sites"></ol>
+        <p id="empty" class="muted" hidden>You haven't added any sites yet.</p>
+      </section>
+
+      <section>
+        <h2>Add a site</h2>
+        <form id="add" autocomplete="off" novalidate>
+          <label>
+            <span>Title</span>
+            <input id="add-title" type="text" placeholder="e.g. Google Messages" maxlength="100">
+          </label>
+          <label>
+            <span>URL</span>
+            <input id="add-url" type="text" inputmode="url" placeholder="e.g. https://messages.google.com/web/" required>
+          </label>
+          <div class="field">
+            <span>Version</span>
+            <button id="add-ua" type="button" class="ua"></button>
+          </div>
+          <label class="fit-check" title="Zoom down to fit the sidebar if the page is wider than the sidebar">
+            <input id="add-fit" type="checkbox">
+            <span>Fit</span>
+          </label>
+          <button type="submit" class="primary">Add site</button>
+        </form>
+        <p id="add-error" class="error" role="alert" hidden></p>
+      </section>
+
+      <section>
+        <h2>Popular sites</h2>
+        <p class="muted">Click a site to add it to your list. You can rename it or change its settings above afterward.</p>
+        <div id="popular" class="popular-groups"></div>
+      </section>
+
+      <section class="notes">
+        <h2>Notes</h2>
+        <ul>
+          <li>The <b>Desktop</b>/<b>Mobile</b> button picks which version of a site you get. <b>Mobile</b> makes SideSites identify your browser to the site as Chrome on an Android phone, which often gives a layout better suited to the narrow side panel. The setting applies to every site on the same host name.</li>
+          <li>The <b>Fit</b> checkbox zooms a site down when its layout is wider than the side panel, and smoothly zooms it back up as you widen the side panel.</li>
+          <li>Sites in the side panel share the cookies of your normal browser profile. If signing in to a site inside the side panel doesn't work, sign in using a regular tab, then reload the site in the side panel. (Note: Gmail does not currently work in the side panel; we're working on it.)</li>
+          <li>To let sites load in the side panel, SideSites removes the headers that forbid framing &mdash; but only for pages loaded in the side panel. Pages in ordinary tabs are unaffected.</li>
+          <li>Pressing <kbd>1</kbd>&ndash;<kbd>9</kbd> in the SideSites menu opens the corresponding site. You can assign a shortcut to open the menu at <a href="#" id="shortcuts">chrome://extensions/shortcuts</a>.</li>
+        </ul>
+      </section>
+    </div>
+
+    <div id="tab-pairs" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-pairs" hidden>
+      <p class="intro">
+        Saved pairs appear in the SideSites menu so you can open two sites in split view with one click.
+        You can also save or remove pairs directly from the menu while in split mode. Changes are saved automatically.
+      </p>
+
+      <section>
+        <h2>Your pairs</h2>
+        <ol id="pairs" aria-label="Pairs"></ol>
+        <p id="pairs-empty" class="muted" hidden>You haven't added any pairs yet.</p>
+      </section>
+
+      <section>
+        <h2>Add a pair</h2>
+        <form id="add-pair" autocomplete="off" novalidate>
+          <label>
+            <span>Top pane</span>
+            <select id="pair-top"></select>
+          </label>
+          <label>
+            <span>Bottom pane</span>
+            <select id="pair-bottom"></select>
+          </label>
+          <button id="add-pair-btn" type="submit" class="primary">Add pair</button>
+        </form>
+        <p id="pair-error" class="error" role="alert" hidden></p>
+      </section>
+
+      <section class="notes">
+        <h2>Notes</h2>
+        <ul>
+          <li>Clicking a pair in the SideSites menu opens both sites together in split view.</li>
+          <li>When split view is active with two saved sites that aren't already a pair, it appears at the top of the Pairs section in the menu with a <b>+</b> button to save it; saved pairs show a <b>&times;</b> button to remove them.</li>
+          <li>In split view, hover over a pane to focus it. Click the <b>&times;</b> button in its upper-right corner to close that pane and expand the other, or right-click / Ctrl+click <b>&times;</b> to expand the active pane to full height.</li>
+          <li>Drag the divider between panes to resize (or double-click it to reset to 50/50), and right-click the <b>Split</b> button in the menu header to swap the top and bottom panes without reloading.</li>
+        </ul>
+      </section>
+    </div>
+
+    <div id="tab-settings" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-settings" hidden>
+      <section>
+        <h2>Split pane</h2>
+        <label class="fit-check">
+          <input id="remember-split-pane" type="checkbox">
+          <span>Remember last site opened in each pane (instead of showing the site picker when splitting)</span>
         </label>
-        <label>
-          <span>URL</span>
-          <input id="add-url" type="text" inputmode="url" placeholder="e.g. https://messages.google.com/web/" required>
-        </label>
-        <div class="field">
-          <span>Version</span>
-          <button id="add-ua" type="button" class="ua"></button>
-        </div>
-        <label class="fit-check" title="Zoom down to fit the sidebar if the page is wider than the sidebar">
-          <input id="add-fit" type="checkbox">
-          <span>Fit</span>
-        </label>
-        <button type="submit" class="primary">Add site</button>
-      </form>
-      <p id="add-error" class="error" role="alert" hidden></p>
-    </section>
-
-    <section>
-      <h2>Popular sites</h2>
-      <p class="muted">Click a site to add it to your list. You can rename it or change its settings above afterward.</p>
-      <div id="popular" class="popular-groups"></div>
-    </section>
-
-    <section>
-      <h2>Split pane</h2>
-      <label class="fit-check">
-        <input id="remember-split-pane" type="checkbox">
-        <span>Remember last site opened in each pane (instead of showing the site picker when splitting)</span>
-      </label>
-    </section>
-
-    <section class="notes">
-      <h2>Notes</h2>
-      <ul>
-        <li>The <b>Desktop</b>/<b>Mobile</b> button picks which version of a site you get. <b>Mobile</b> makes SideSites identify your browser to the site as Chrome on an Android phone, which often gives a layout better suited to the narrow side panel. The setting applies to every site on the same host name.</li>
-        <li>The <b>Fit</b> checkbox zooms a site down when its layout is wider than the side panel, and smoothly zooms it back up as you widen the side panel.</li>
-        <li>Sites in the side panel share the cookies of your normal browser profile. If signing in to a site inside the side panel doesn't work, sign in using a regular tab, then reload the site in the side panel. (Note: Gmail does not currently work in the side panel; we're working on it.)</li>
-        <li>To let sites load in the side panel, SideSites removes the headers that forbid framing &mdash; but only for pages loaded in the side panel. Pages in ordinary tabs are unaffected.</li>
-        <li>Pressing <kbd>1</kbd>&ndash;<kbd>9</kbd> in the SideSites menu opens the corresponding site. You can assign a shortcut to open the menu at <a href="#" id="shortcuts">chrome://extensions/shortcuts</a>.</li>
-      </ul>
-    </section>
+      </section>
+    </div>
   </main>
 
   <footer>
@@ -90,6 +139,22 @@
         <span>Fit</span>
       </label>
       <span class="buttons">
+        <button type="button" class="up" title="Move up" aria-label="Move up">&#x25B2;</button>
+        <button type="button" class="down" title="Move down" aria-label="Move down">&#x25BC;</button>
+        <button type="button" class="remove" title="Remove" aria-label="Remove">&#x2715;</button>
+      </span>
+    </li>
+  </template>
+
+  <template id="pair-row-template">
+    <li class="pair-row">
+      <span class="pair-favicons" aria-hidden="true">
+        <img class="favicon pair-favicon-top" alt="" width="16" height="16">
+        <img class="favicon pair-favicon-bottom" alt="" width="16" height="16">
+      </span>
+      <span class="pair-label"></span>
+      <span class="buttons">
+        <button type="button" class="swap" title="Swap top and bottom" aria-label="Swap top and bottom">&#x21C5;</button>
         <button type="button" class="up" title="Move up" aria-label="Move up">&#x25B2;</button>
         <button type="button" class="down" title="Move down" aria-label="Move down">&#x25BC;</button>
         <button type="button" class="remove" title="Remove" aria-label="Remove">&#x2715;</button>

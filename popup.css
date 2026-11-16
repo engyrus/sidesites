@@ -96,6 +96,36 @@ ul {
   margin: 0 3px;
   background: var(--rule);
 }
+#pairs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pair-row {
+  display: flex;
+  align-items: center;
+}
+.pair-btn {
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+}
+.pair-icons {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.pair-icons img {
+  width: 14px;
+  height: 14px;
+}
+.pair-action {
+  flex: none;
+  margin-right: 8px;
+  font-size: 14px;
+  line-height: 1;
+}
 .item {
   display: flex;
   align-items: center;
@@ -181,10 +211,6 @@ ul {
 .context-menu button:focus-visible {
   background: var(--hover);
   outline: none;
-}
-#empty {
-  padding: 7px 14px;
-  color: var(--muted);
 }
 hr {
   border: none;

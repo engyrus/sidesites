@@ -1,6 +1,6 @@
 import {
-  getSites, saveSites, newId, normalizeUrl, hostnameOf, canonicalHost, faviconUrl, isMobile, isFit,
-  SITES_KEY, UA_DESKTOP, UA_MOBILE,
+  getSites, saveSites, getPairs, savePairs, newId, normalizeUrl, hostnameOf, canonicalHost,
+  faviconUrl, isMobile, isFit, SITES_KEY, PAIRS_KEY, UA_DESKTOP, UA_MOBILE,
 } from './sites.js';
 
 const list = document.getElementById('sites');
@@ -13,6 +13,39 @@ const addFit = document.getElementById('add-fit');
 const addError = document.getElementById('add-error');
 
 let sites = await getSites();
+let pairs = await getPairs();
+
+// ---- Tabs ----
+
+const tabButtons = [...document.querySelectorAll('.tab[data-tab]')];
+const tabPanels = new Map(
+  tabButtons.map((btn) => [btn.dataset.tab, document.getElementById(`tab-${btn.dataset.tab}`)])
+);
+
+function selectTab(name, { focus = false } = {}) {
+  if (!tabPanels.has(name)) name = 'sites';
+  for (const btn of tabButtons) {
+    const active = btn.dataset.tab === name;
+    btn.setAttribute('aria-selected', String(active));
+    btn.tabIndex = active ? 0 : -1;
+    tabPanels.get(btn.dataset.tab).hidden = !active;
+    if (active && focus) btn.focus();
+  }
+  if (location.hash !== `#${name}`) history.replaceState(null, '', `#${name}`);
+}
+
+for (const btn of tabButtons) {
+  btn.addEventListener('click', () => selectTab(btn.dataset.tab));
+  btn.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const idx = tabButtons.indexOf(btn);
+    const next = (idx + (event.key === 'ArrowRight' ? 1 : -1) + tabButtons.length) % tabButtons.length;
+    selectTab(tabButtons[next].dataset.tab, { focus: true });
+  });
+}
+
+selectTab(location.hash.slice(1) || 'sites');
 
 // Suggestions for the "Popular sites" section, grouped by category. userAgent is the version that
 // suits a narrow sidebar best.
@@ -186,6 +219,7 @@ function toggledMode(mode) {
 }
 
 async function commit() {
+  renderPairs();
   await saveSites(sites);
 }
 
@@ -370,6 +404,142 @@ addForm.addEventListener('submit', (event) => {
   addTitle.focus();
 });
 
+// ---- Pairs ----
+
+const pairsList = document.getElementById('pairs');
+const pairsEmpty = document.getElementById('pairs-empty');
+const pairRowTemplate = document.getElementById('pair-row-template');
+const addPairForm = document.getElementById('add-pair');
+const pairTopSelect = document.getElementById('pair-top');
+const pairBottomSelect = document.getElementById('pair-bottom');
+const addPairBtn = document.getElementById('add-pair-btn');
+const pairError = document.getElementById('pair-error');
+
+function toPayload(site) {
+  return {
+    id: site.id,
+    title: site.title,
+    url: site.url,
+    userAgent: site.userAgent ?? UA_DESKTOP,
+    fit: Boolean(site.fit),
+  };
+}
+
+function pairSiteLabel(entry) {
+  const saved = sites.find((s) => s.id === entry?.id);
+  if (saved?.title) return saved.title;
+  return hostnameOf(entry?.url) || entry?.title || entry?.url || '';
+}
+
+function samePairSide(a, b) {
+  if (!a || !b) return false;
+  const aAdhoc = !a.id || String(a.id).startsWith('adhoc:');
+  const bAdhoc = !b.id || String(b.id).startsWith('adhoc:');
+  if (!aAdhoc && !bAdhoc) return a.id === b.id;
+  return a.url === b.url;
+}
+
+function renderPairSelects() {
+  const prevTop = pairTopSelect.value;
+  const prevBottom = pairBottomSelect.value;
+  for (const select of [pairTopSelect, pairBottomSelect]) {
+    select.replaceChildren(
+      ...sites.map((s) => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.title || hostnameOf(s.url);
+        return opt;
+      })
+    );
+    select.disabled = !sites.length;
+  }
+  addPairBtn.disabled = !sites.length;
+  if (sites.some((s) => s.id === prevTop)) pairTopSelect.value = prevTop;
+  if (sites.some((s) => s.id === prevBottom)) pairBottomSelect.value = prevBottom;
+  else if (sites.length > 1 && pairBottomSelect.selectedIndex === 0) pairBottomSelect.selectedIndex = 1;
+}
+
+function renderPairs() {
+  pairsList.replaceChildren();
+  pairsEmpty.hidden = pairs.length > 0;
+  renderPairSelects();
+
+  pairs.forEach((pair, index) => {
+    const row = pairRowTemplate.content.firstElementChild.cloneNode(true);
+    row.querySelector('.pair-favicon-top').src = faviconUrl(pair.top.url, 32);
+    row.querySelector('.pair-favicon-bottom').src = faviconUrl(pair.bottom.url, 32);
+    row.querySelector('.pair-label').textContent = `${pairSiteLabel(pair.top)} + ${pairSiteLabel(pair.bottom)}`;
+    row.querySelector('.pair-label').title = `${pair.top.url} + ${pair.bottom.url}`;
+
+    row.querySelector('.swap').addEventListener('click', () => {
+      const oldTop = pair.top;
+      const oldBottom = pair.bottom;
+      [pair.top, pair.bottom] = [pair.bottom, pair.top];
+      savePairs(pairs);
+      renderPairs();
+      chrome.storage.session.get(null).then((all) => {
+        const updates = {};
+        for (const [key, req] of Object.entries(all)) {
+          if (!key.startsWith('win:') || req?.mode !== 'split') continue;
+          if (!samePairSide(req.top, oldTop) || !samePairSide(req.bottom, oldBottom)) continue;
+          updates[key] = {
+            ...req,
+            focused: req.focused === 'top' ? 'bottom' : 'top',
+            top: req.bottom,
+            bottom: req.top,
+            swap: true,
+            ts: Date.now(),
+          };
+        }
+        if (Object.keys(updates).length) chrome.storage.session.set(updates);
+      }).catch(() => {});
+    });
+    const up = row.querySelector('.up');
+    const down = row.querySelector('.down');
+    up.disabled = index === 0;
+    down.disabled = index === pairs.length - 1;
+    up.addEventListener('click', () => {
+      if (index === 0) return;
+      [pairs[index - 1], pairs[index]] = [pairs[index], pairs[index - 1]];
+      savePairs(pairs);
+      renderPairs();
+    });
+    down.addEventListener('click', () => {
+      if (index >= pairs.length - 1) return;
+      [pairs[index + 1], pairs[index]] = [pairs[index], pairs[index + 1]];
+      savePairs(pairs);
+      renderPairs();
+    });
+    row.querySelector('.remove').addEventListener('click', () => {
+      pairs.splice(index, 1);
+      savePairs(pairs);
+      renderPairs();
+    });
+
+    pairsList.append(row);
+  });
+}
+
+addPairForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  pairError.hidden = true;
+  const topSite = sites.find((s) => s.id === pairTopSelect.value);
+  const bottomSite = sites.find((s) => s.id === pairBottomSelect.value);
+  if (!topSite || !bottomSite) {
+    pairError.textContent = 'Add at least one site in the Sites tab first.';
+    pairError.hidden = false;
+    return;
+  }
+  if (pairs.some((p) => samePairSide(p.top, topSite) && samePairSide(p.bottom, bottomSite))) {
+    pairError.textContent = 'That pair is already in your list.';
+    pairError.hidden = false;
+    return;
+  }
+  pairs.push({ id: newId(), top: toPayload(topSite), bottom: toPayload(bottomSite) });
+  savePairs(pairs);
+  renderPairs();
+});
+
 // ---- Misc ----
 
 const REMEMBER_SPLIT_PANE_KEY = 'rememberSplitPane';
@@ -392,11 +562,23 @@ chrome.storage.onChanged.addListener((changes, area) => {
     rememberSplitBox.checked = Boolean(changes[REMEMBER_SPLIT_PANE_KEY].newValue);
     return;
   }
-  if (area !== 'sync' || !changes[SITES_KEY]) return;
-  const incoming = changes[SITES_KEY].newValue ?? [];
-  if (JSON.stringify(incoming) === JSON.stringify(sites)) return;
-  sites = incoming;
-  render();
+  if (area !== 'sync') return;
+  if (changes[SITES_KEY]) {
+    const incoming = changes[SITES_KEY].newValue ?? [];
+    if (JSON.stringify(incoming) !== JSON.stringify(sites)) {
+      sites = incoming;
+      render();
+      renderPairs();
+    }
+  }
+  if (changes[PAIRS_KEY]) {
+    const incoming = changes[PAIRS_KEY].newValue ?? [];
+    if (JSON.stringify(incoming) !== JSON.stringify(pairs)) {
+      pairs = incoming;
+      renderPairs();
+    }
+  }
 });
 
 render();
+renderPairs();

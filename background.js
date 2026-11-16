@@ -218,11 +218,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
   pendingCacheClear = clearCachedFramingHeaders(changed).catch(console.error);
 });
 
-chrome.runtime.onInstalled.addListener(async ({ reason }) => {
+chrome.runtime.onInstalled.addListener(() => {
   pendingCacheClear = clearAllConfiguredSites().catch(console.error);
-  if (reason === 'install' && !(await getSites()).length) {
-    chrome.runtime.openOptionsPage();
-  }
 });
 
 chrome.runtime.onStartup.addListener(() => {

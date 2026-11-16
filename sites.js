@@ -8,6 +8,7 @@
 //   chrome.storage.session cur:<windowId>: { url }        -- page currently showing in that window's sidebar
 
 export const SITES_KEY = 'sites';
+export const PAIRS_KEY = 'pairs';
 export const LAST_SITE_KEY = 'lastSiteId';
 export const SITE_FIT_KEY = 'siteFit';
 
@@ -46,6 +47,15 @@ export async function getSites() {
 
 export async function saveSites(sites) {
   await chrome.storage.sync.set({ [SITES_KEY]: sites });
+}
+
+export async function getPairs() {
+  const { [PAIRS_KEY]: pairs } = await chrome.storage.sync.get(PAIRS_KEY);
+  return Array.isArray(pairs) ? pairs : [];
+}
+
+export async function savePairs(pairs) {
+  await chrome.storage.sync.set({ [PAIRS_KEY]: pairs });
 }
 
 export function newId() {

@@ -1,9 +1,11 @@
 import {
-  getSites, saveSites, newId, normalizeUrl, windowKey, currentPageKey, faviconUrl, hostnameOf,
-  isMobile, isFit, LAST_SITE_KEY, UA_DESKTOP, UA_MOBILE,
+  getSites, saveSites, getPairs, savePairs, newId, normalizeUrl, windowKey, currentPageKey,
+  faviconUrl, hostnameOf, isMobile, isFit, LAST_SITE_KEY, UA_DESKTOP, UA_MOBILE,
 } from './sites.js';
 
 const list = document.getElementById('sites');
+const pairsSection = document.getElementById('pairs-section');
+const pairsList = document.getElementById('pairs');
 const urlForm = document.getElementById('url-form');
 const urlInput = document.getElementById('url');
 const adhocUaBtn = document.getElementById('adhoc-ua');
@@ -27,6 +29,7 @@ const LAST_PANE_SITE_KEY = 'lastPaneSite';
 
 const { id: windowId } = await chrome.windows.getCurrent();
 const sites = await getSites();
+let pairs = await getPairs();
 const { [windowKey(windowId)]: requested } = await chrome.storage.session.get(windowKey(windowId));
 const {
   [LAST_SITE_KEY]: lastId,
@@ -179,6 +182,126 @@ function render() {
     li.append(button);
     list.append(li);
   });
+
+  renderPairs();
+}
+
+function isDefinedSite(entry) {
+  return Boolean(entry?.id && !String(entry.id).startsWith('adhoc:') && sites.some((s) => s.id === entry.id));
+}
+
+function samePairSide(a, b) {
+  if (!a || !b) return false;
+  if (a.id && b.id) return a.id === b.id;
+  return a.url === b.url;
+}
+
+function samePair(a, b) {
+  return samePairSide(a?.top, b?.top) && samePairSide(a?.bottom, b?.bottom);
+}
+
+function pairSiteLabel(entry) {
+  const saved = sites.find((s) => s.id === entry?.id);
+  if (saved?.title) return saved.title;
+  return hostnameOf(entry?.url) || entry?.title || entry?.url || '';
+}
+
+function resolvePairSite(entry) {
+  return sites.find((s) => s.id === entry?.id) ?? entry;
+}
+
+function openPair(pair) {
+  const payload = {
+    mode: 'split',
+    focused: 'top',
+    top: toPayload(resolvePairSite(pair.top)),
+    bottom: toPayload(resolvePairSite(pair.bottom)),
+    ts: Date.now(),
+  };
+  const wrote = chrome.storage.session.set({ [windowKey(windowId)]: payload });
+  // No awaiting before this call, or the click's user gesture is lost.
+  const opened = chrome.sidePanel.open({ windowId }).catch(console.error);
+  Promise.allSettled([opened, wrote]).finally(() => window.close());
+}
+
+function createPairRow(pair, { isCurrent = false, isSaved = false } = {}) {
+  const li = document.createElement('li');
+  li.role = 'none';
+  li.className = 'pair-row';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'item pair-btn';
+  button.role = 'menuitem';
+  button.title = `${pair.top.url} + ${pair.bottom.url}`;
+  if (isCurrent) button.classList.add('current');
+
+  const icons = document.createElement('span');
+  icons.className = 'pair-icons';
+  icons.setAttribute('aria-hidden', 'true');
+  for (const side of [pair.top, pair.bottom]) {
+    const img = document.createElement('img');
+    img.alt = '';
+    img.src = faviconUrl(side.url, 32);
+    icons.append(img);
+  }
+
+  const label = document.createElement('span');
+  label.className = 'title';
+  label.textContent = `${pairSiteLabel(pair.top)} + ${pairSiteLabel(pair.bottom)}`;
+
+  button.append(icons, label);
+  button.addEventListener('click', () => openPair(pair));
+
+  const action = document.createElement('button');
+  action.type = 'button';
+  action.className = 'icon-btn pair-action';
+  if (isSaved) {
+    action.textContent = '\u00D7';
+    action.title = 'Remove pair';
+    action.setAttribute('aria-label', 'Remove pair');
+    action.addEventListener('click', () => {
+      pairs = pairs.filter((p) => p.id !== pair.id);
+      savePairs(pairs);
+      renderPairs();
+    });
+  } else {
+    action.textContent = '+';
+    action.title = 'Save pair';
+    action.setAttribute('aria-label', 'Save pair');
+    action.addEventListener('click', () => {
+      const newPair = {
+        id: newId(),
+        top: toPayload(pair.top),
+        bottom: toPayload(pair.bottom),
+      };
+      pairs = [...pairs, newPair];
+      savePairs(pairs);
+      renderPairs();
+    });
+  }
+
+  li.append(button, action);
+  return li;
+}
+
+function renderPairs() {
+  const activePair =
+    splitActive && isDefinedSite(requested.top) && isDefinedSite(requested.bottom)
+      ? { top: requested.top, bottom: requested.bottom }
+      : null;
+  const activeDefined = activePair ? pairs.find((p) => samePair(p, activePair)) : null;
+
+  pairsSection.hidden = !activePair && !pairs.length;
+  pairsList.replaceChildren();
+  if (pairsSection.hidden) return;
+
+  if (activePair && !activeDefined) {
+    pairsList.append(createPairRow(activePair, { isCurrent: true, isSaved: false }));
+  }
+  for (const pair of pairs) {
+    pairsList.append(createPairRow(pair, { isCurrent: activeDefined?.id === pair.id, isSaved: true }));
+  }
 }
 
 // Number keys 1-9 pick a site; arrow keys move between menu items. (Not while focus is in the URL

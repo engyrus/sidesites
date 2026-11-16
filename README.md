@@ -24,7 +24,7 @@ browser's native side panel, including sites that normally refuse to be shown in
 - **One-click popular sites**: The settings page includes categorized buttons (Chat, Music, AI assistants, Productivity,
   Reference, Social, Shopping) to add popular sites with sensible defaults.
 - **Keyboard friendly**: In the menu, press **`1`**–**`9`** to open the corresponding site, or use the arrow keys and **`Enter`**.
-- **Manage sites and settings…**: Located directly below your saved sites list to open the settings page.
+- **Manage sites and settings…**: Located below your saved sites (and pairs) to open the three-tabbed settings page (**Sites**, **Pairs**, and **Settings**).
 - **Open any URL**: Below **Manage sites and settings…**, you'll find:
   - **Open side site in a new tab**: opens the page the sidebar is currently showing in a regular tab.
   - **Open current tab as side site**: shows the current tab's page in the sidebar.
@@ -43,6 +43,7 @@ SideSites can display two sites at once in a top/bottom split inside the side pa
   - Or **right-click** any saved site, **Open current tab as side site**, or the **`→`** submit button and choose **Open in Top** or **Open in Bottom**.
 - **Filling the second pane:** Use the ad-hoc URL bar at the top of the in-pane picker (with its own Desktop/Mobile and Fit toggles), pick any saved site below it, or choose a site from the extension menu. Check **Remember last site opened in this pane** at the bottom of the picker to automatically reopen your last second-pane site instead of showing the picker each time you split (you can turn this off later in **Manage sites and settings…**).
 - **Pane focus:** Hovering over a pane or loading a site into it focuses that pane, indicated by an **×** close button in its top-right corner. Left-clicking a site in the menu, pressing **`1`**–**`9`**, using the header controls (**Desktop/Mobile**, **Fit**, **Back/Forward/Reload**), and **Open side site in a new tab** all apply to the focused pane.
+- **Saved pairs:** When split view is active with two saved sites or when pairs are defined, a **Pairs** section appears in the menu (`site1 + site2`). Click `+` on an unsaved active split to save it, click `×` on a saved pair to remove it, or click any saved pair to open both sites in split view. You can also add, swap Top/Bottom, reorder, and remove pairs in the **Pairs** tab of **Manage sites and settings…**.
 - **Resizing, swapping, and exiting:**
   - Drag the divider between panes to resize (persisted across sessions), or **double-click** the divider to snap back to 50/50.
   - **Right-click** the **Split** button while already in split mode to swap the Top and Bottom panes without reloading either site.
@@ -99,8 +100,8 @@ Back/Forward/Reload navigation from the menu.
 2. Open your Chromium browser and navigate to `chrome://extensions`.
 3. Enable **Developer mode** in the top-right corner.
 4. Click **Load unpacked** and select the `sidesites` folder.
-5. The settings page opens automatically the first time; add some sites. You can get back to it later by choosing
-   **Manage sites and settings…** from the SideSites menu.
+5. Click the SideSites toolbar icon and choose **Manage sites and settings…** to add some sites (or open any URL directly
+   from the menu).
 
 ## Limitations
 

@@ -42,6 +42,28 @@ header {
   align-items: center;
   gap: 12px;
 }
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  padding: 8px 16px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--muted);
+  font-weight: 500;
+}
+.tab:hover {
+  color: var(--fg);
+}
+.tab[aria-selected="true"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
 h1 { margin: 0; font-size: 26px; font-weight: 500; }
 h2 { font-size: 16px; font-weight: 500; margin: 0 0 12px; }
 section {
@@ -54,7 +76,7 @@ section {
 .intro, .muted { color: var(--muted); }
 a { color: var(--accent); }
 
-input[type="text"] {
+input[type="text"], select {
   font: inherit;
   color: inherit;
   background: transparent;
@@ -63,7 +85,11 @@ input[type="text"] {
   padding: 6px 8px;
   min-width: 0;
 }
-input[type="text"]:focus {
+select option {
+  background: var(--card);
+  color: var(--fg);
+}
+input[type="text"]:focus, select:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
   border-color: transparent;
@@ -184,6 +210,45 @@ button.ua svg { flex: none; width: 16px; height: 16px; }
 #add button.ua[aria-pressed="true"] { color: var(--accent); }
 .error { color: var(--error); margin: 10px 0 0; }
 
+/* Pairs */
+#pairs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pair-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-radius: 8px;
+}
+.pair-row:hover { background: var(--hover); }
+.pair-favicons {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.pair-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#add-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+#add-pair label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 /* Popular sites */
 .popular-groups {
   display: flex;
@@ -239,5 +304,5 @@ footer {
 }
 
 @media (max-width: 600px) {
-  #add { grid-template-columns: 1fr; }
+  #add, #add-pair { grid-template-columns: 1fr; }
 }
